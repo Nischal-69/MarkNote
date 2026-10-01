@@ -360,6 +360,44 @@ body {
   overflow: hidden;
 }
 
+.note-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.note-kind {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  background: var(--bg-soft);
+}
+
+.badge.pdf {
+  color: #92600a;
+  border-color: var(--highlight-border);
+  background: #fef9c3;
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge.pdf {
+    color: #facc15;
+    background: #3a3413;
+  }
+}
+
 .note-text {
   font-size: 12px;
   margin-top: 4px;
@@ -409,4 +447,11 @@ body {
 
 .hidden {
   display: none;
+}
+
+/* ---- Keyboard accessibility ---- */
+
+:focus-visible {
+  outline: 2px solid var(--highlight-border);
+  outline-offset: 2px;
 }

@@ -206,6 +206,32 @@ body {
   flex-shrink: 0;
 }
 
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.badge.pdf {
+  color: #92600a;
+  border-color: var(--highlight-border);
+  background: #fef9c3;
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge.pdf {
+    color: #facc15;
+    background: #3a3413;
+  }
+}
+
 .card-quote {
   margin-top: 8px;
   font-size: 13px;
@@ -295,4 +321,11 @@ body {
   color: var(--text-faint);
   font-size: 14px;
   padding: 40px 0;
+}
+
+/* ---- Keyboard accessibility ---- */
+
+:focus-visible {
+  outline: 2px solid var(--highlight-border);
+  outline-offset: 2px;
 }

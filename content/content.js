@@ -788,6 +788,7 @@
 
     // Persist first so the returned id tags the DOM (single source of truth).
     let annotationId = localFallbackId();
+    let annotationExpiry = null;
     const s = store();
     if (s) {
       try {
@@ -801,6 +802,7 @@
           type: 'note',
         });
         annotationId = saved.id;
+        annotationExpiry = saved.expiresAt;
       } catch (err) {
         console.warn('[MarkNote] Storage save failed, keeping note in DOM only:', err);
       }
@@ -813,7 +815,7 @@
     const marker = createNoteMarker(annotationId);
     anchorMarker(marker, marks, range);
 
-    notes.set(annotationId, { id: annotationId, selectedText, noteText });
+    notes.set(annotationId, { id: annotationId, selectedText, noteText, expiresAt: annotationExpiry });
 
     hideNotePanel();
     hideToolbar();
@@ -893,7 +895,7 @@
         s.getAnnotations(location.href).then((all) => {
           const found = all.find((a) => a.id === noteId);
           if (found) {
-            notes.set(noteId, { id: found.id, selectedText: truncate(found.selectedText, 200), noteText: found.note });
+            notes.set(noteId, { id: found.id, selectedText: truncate(found.selectedText, 200), noteText: found.note, expiresAt: found.expiresAt });
             showViewPanel(noteId, anchorRect);
           }
         }).catch(() => {});
@@ -923,6 +925,10 @@
     body.className = 'marknote-panel-note';
     body.textContent = note.noteText;
 
+    const expiry = document.createElement('div');
+    expiry.className = 'marknote-panel-expiry';
+    expiry.textContent = formatExpiry(note.expiresAt);
+
     const actions = document.createElement('div');
     actions.className = 'marknote-panel-actions';
 
@@ -947,6 +953,9 @@
     });
     del.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (!window.confirm('Delete this note? The highlight will be removed too.')) {
+        return;
+      }
       deleteNote(noteId).catch((err) => console.warn('[MarkNote] Note delete failed:', err));
     });
     close.addEventListener('click', (e) => {
@@ -961,9 +970,19 @@
     panelEl.appendChild(title);
     panelEl.appendChild(selected);
     panelEl.appendChild(body);
+    panelEl.appendChild(expiry);
     panelEl.appendChild(actions);
 
     positionPanelNearRect(anchorRect || markerRect(noteId) || lastRect || { left: window.innerWidth / 2, top: 100, bottom: 110, width: 0 });
+  }
+
+  function formatExpiry(expiresAt) {
+    const ms = Number(expiresAt) - Date.now();
+    if (!Number.isFinite(ms) || ms <= 0) {
+      return 'Annotation expires today';
+    }
+    const days = Math.ceil(ms / (24 * 60 * 60 * 1000));
+    return days === 1 ? 'Annotation expires in 1 day' : `Annotation expires in ${days} days`;
   }
 
   function showEditPanel(noteId) {
@@ -1434,6 +1453,7 @@
         id: annotation.id,
         selectedText: truncate(annotation.selectedText, 200),
         noteText: annotation.note || '',
+        expiresAt: annotation.expiresAt,
       });
       const marker = createNoteMarker(annotation.id);
       try {

@@ -65,6 +65,11 @@
       all = await storage.getAnnotations();
     } catch (err) {
       console.warn('[MarkNote] Load failed:', err);
+      list.innerHTML = '';
+      const empty = document.createElement('p');
+      empty.className = 'empty';
+      empty.textContent = 'Could not load annotations. Check storage access and try again.';
+      list.appendChild(empty);
       setStatus('Could not load annotations.');
       return;
     }
@@ -130,11 +135,17 @@
     title.className = 'card-title';
     title.textContent = a.pageTitle || '(Untitled page)';
     title.title = a.pageTitle || '';
+    const badge = document.createElement('span');
+    const pdfKind = isPdf(a);
+    badge.className = `badge ${pdfKind ? 'pdf' : 'web'}`;
+    badge.textContent = pdfKind ? 'PDF' : 'WEB';
+    badge.title = pdfKind ? 'PDF document' : 'Web page';
     const domain = document.createElement('span');
     domain.className = 'card-domain';
     domain.textContent = domainOf(a.url);
     domain.title = a.url || '';
     top.appendChild(title);
+    top.appendChild(badge);
     top.appendChild(domain);
     el.appendChild(top);
 
@@ -156,7 +167,9 @@
 
     const meta = document.createElement('p');
     meta.className = 'card-meta';
-    meta.appendChild(document.createTextNode(`Created ${formatDate(a.createdAt)} · `));
+    const kindText = a.note ? 'Note' : 'Highlight';
+    const pageText = isPdf(a) && Number.isInteger(a.pageNumber) ? ` · Page ${a.pageNumber}` : '';
+    meta.appendChild(document.createTextNode(`${kindText}${pageText} · Created ${formatDate(a.createdAt)} · `));
     const remain = document.createElement('span');
     const ms = remainingMs(a);
     if (ms <= SOON_MS) {
@@ -247,7 +260,13 @@
       }
       save.disabled = true;
       try {
-        await globalThis.MarkNoteStorage.updateAnnotation(a.id, { note: next });
+        // Adding a first note to a plain highlight promotes its kind so
+        // badges, filters, and counts stay consistent.
+        const patch = { note: next };
+        if (!a.note) {
+          patch.type = isPdf(a) ? 'pdf-note' : 'note';
+        }
+        await globalThis.MarkNoteStorage.updateAnnotation(a.id, patch);
         flash('Note saved.');
         await reload();
       } catch (err) {
@@ -306,10 +325,14 @@
     if (!a) {
       return false;
     }
-    if (a.type === 'pdf') {
+    if (a.type === 'pdf' || isPdf(a)) {
       return false;
     }
     return !/\.pdf($|[?#])/i.test(a.url || '');
+  }
+
+  function isPdf(a) {
+    return !!a && typeof a.type === 'string' && a.type.indexOf('pdf-') === 0;
   }
 
   function remainingMs(a) {

@@ -190,6 +190,12 @@ mark.marknote-highlight {
   -webkit-user-select: text !important;
 }
 
+#marknote-note-panel .marknote-panel-expiry {
+  font-size: 11px !important;
+  color: #6b7280 !important;
+  margin: -6px 0 10px !important;
+}
+
 #marknote-note-panel .marknote-panel-textarea {
   width: 100% !important;
   min-height: 64px !important;
@@ -252,6 +258,15 @@ mark.marknote-highlight {
 
 #marknote-note-panel .marknote-btn-delete:hover {
   background: #fef2f2 !important;
+}
+
+/* ---- Keyboard accessibility (scoped to MarkNote UI only) ---- */
+#marknote-toolbar button:focus-visible,
+#marknote-indicator-close:focus-visible,
+#marknote-note-panel button:focus-visible,
+.marknote-note-marker:focus-visible {
+  outline: 2px solid #facc15 !important;
+  outline-offset: 2px !important;
 }
 
 /* ---- Restore status: small transient toast, never interactive ---- */

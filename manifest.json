@@ -2,13 +2,13 @@
   "manifest_version": 3,
   "name": "MarkNote — PDF & Web Highlighter + Notes",
   "short_name": "MarkNote",
-  "version": "0.10.0",
+  "version": "0.12.0",
   "description": "Highlight text and add notes while reading.",
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "MarkNote"
   },
-  "permissions": ["activeTab", "scripting", "storage", "clipboardWrite"],
+  "permissions": ["activeTab", "storage", "clipboardWrite"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background/background.js"

@@ -1,4 +1,4 @@
-// MarkNote PDF Viewer — v0.10.0 extension-owned viewer (PDF.js, vendored).
+// MarkNote PDF Viewer — v0.11.0 extension-owned viewer (PDF.js, vendored).
 // Own DOM: canvas + selectable text layer per page. No hacks against the
 // built-in viewer; web highlighting/storage/expiry logic is untouched.
 // Annotations persist via shared MarkNoteStorage (docId-anchored, 7-day TTL).
@@ -47,6 +47,8 @@
     if (!pdfUrl) {
       throw new Error('No PDF file specified (?file= is missing).');
     }
+    statusEl.textContent = 'Loading document…';
+    statusEl.style.display = 'block';
     const pdfjsLib = globalThis.pdfjsLib;
     if (!pdfjsLib) {
       throw new Error('PDF engine failed to load.');
@@ -80,6 +82,7 @@
     await buildShells();
     wireUi();
     observePages();
+    statusEl.style.display = 'none';
     console.log(`[MarkNote] PDF viewer ready: ${numPages} page(s), docId ${docId.slice(0, 18)}…`);
   }
 
@@ -517,7 +520,8 @@
         { label: 'Cancel', cls: '', onClick: () => { hidePanel(); lastRange = null; clearSelection(); } },
       ],
       true,
-      rect
+      rect,
+      null
     );
   }
 
@@ -531,7 +535,7 @@
     const saved = await persistSelection(range, noteText, 'note');
     const marks = wrapRangeNodes(range, { noteId: saved.id, annotationId: saved.id });
     anchorMarker(createMarker(saved.id), marks);
-    notes.set(saved.id, { id: saved.id, selectedText: preview, noteText });
+    notes.set(saved.id, { id: saved.id, selectedText: preview, noteText, expiresAt: saved.expiresAt });
     hidePanel();
     hideToolbar();
     lastRange = null;
@@ -540,7 +544,7 @@
     console.log('[MarkNote] PDF note saved.');
   }
 
-  function renderPanel(title, preview, noteText, buttons, editable, rect) {
+  function renderPanel(title, preview, noteText, buttons, editable, rect, expiryText) {
     panelEl.innerHTML = '';
     const t = document.createElement('div');
     t.className = 'pp-title';
@@ -556,12 +560,20 @@
       ta = document.createElement('textarea');
       ta.placeholder = 'Write your note...';
       ta.value = noteText || '';
+      ta.setAttribute('aria-label', 'Write your note');
       panelEl.appendChild(ta);
     } else if (noteText) {
       const body = document.createElement('div');
       body.className = 'pp-note';
       body.textContent = noteText;
       panelEl.appendChild(body);
+    }
+
+    if (expiryText) {
+      const expiry = document.createElement('div');
+      expiry.className = 'pp-expiry';
+      expiry.textContent = expiryText;
+      panelEl.appendChild(expiry);
     }
 
     const row = document.createElement('div');
@@ -641,19 +653,24 @@
                 { label: 'Cancel', cls: '', onClick: () => showNote(noteId) },
               ],
               true,
-              rect
+              rect,
+              null
             );
           },
         },
         {
           label: 'Delete', cls: 'pp-delete', onClick: async () => {
+            if (!window.confirm('Delete this note? The highlight will be removed too.')) {
+              return;
+            }
             await deleteNote(noteId);
           },
         },
         { label: 'Close', cls: '', onClick: () => hidePanel() },
       ],
       false,
-      rect
+      rect,
+      formatExpiry(note.expiresAt)
     );
   }
 
@@ -671,7 +688,7 @@
       while (mark.firstChild) {
         parent.insertBefore(mark.firstChild, mark);
       }
-      parent.remove();
+      mark.remove();
       parent.normalize();
     });
     notes.delete(noteId);
@@ -800,6 +817,7 @@
         id: a.id,
         selectedText: a.selectedText.replace(/\s+/g, ' ').trim().slice(0, 200),
         noteText: a.note || '',
+        expiresAt: a.expiresAt,
       });
       anchorMarker(createMarker(a.id), marks);
     }
@@ -931,7 +949,17 @@
     console.log(`[MarkNote] ${message}`);
   }
 
+  function formatExpiry(expiresAt) {
+    const ms = Number(expiresAt) - Date.now();
+    if (!Number.isFinite(ms) || ms <= 0) {
+      return 'Annotation expires today';
+    }
+    const days = Math.ceil(ms / (24 * 60 * 60 * 1000));
+    return days === 1 ? 'Annotation expires in 1 day' : `Annotation expires in ${days} days`;
+  }
+
   function showError(message) {
+    statusEl.style.display = 'none';
     errorEl.textContent = message;
     errorEl.classList.remove('hidden');
     docTitleEl.textContent = 'Failed to load';

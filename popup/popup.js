@@ -1,4 +1,4 @@
-// MarkNote Popup — v0.9.0 polished UI + manager entry + PDF detection.
+// MarkNote Popup — v0.11.0 polished UI + manager entry + PDF detection.
 // Read-only dashboard: activation handoff, live counts, active status, notes list.
 // PDF tabs are identified (never force-activated); core logic untouched.
 
@@ -288,6 +288,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'note-card';
 
+      const head = document.createElement('div');
+      head.className = 'note-head';
+      const badge = document.createElement('span');
+      const pdfKind = typeof a.type === 'string' && a.type.indexOf('pdf-') === 0;
+      badge.className = `badge ${pdfKind ? 'pdf' : 'web'}`;
+      badge.textContent = pdfKind ? 'PDF' : 'WEB';
+      head.appendChild(badge);
+      const kind = document.createElement('span');
+      kind.className = 'note-kind';
+      const pageText = pdfKind && Number.isInteger(a.pageNumber) ? ` · Page ${a.pageNumber}` : '';
+      kind.textContent = `${a.note ? 'Note' : 'Highlight'}${pageText}`;
+      head.appendChild(kind);
+      card.appendChild(head);
+
       const quote = document.createElement('p');
       quote.className = 'note-quote';
       quote.textContent = `\u201C${collapse(a.selectedText)}\u201D`;
@@ -302,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const meta = document.createElement('p');
       meta.className = 'note-meta';
-      meta.textContent = `${a.type === 'note' ? 'Note' : 'Highlight'} · ${daysLeft(a)}`;
+      meta.textContent = daysLeft(a);
       card.appendChild(meta);
 
       items.appendChild(card);

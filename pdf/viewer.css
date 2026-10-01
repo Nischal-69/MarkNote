@@ -297,6 +297,12 @@ mark.marknote-highlight {
   -webkit-user-select: text;
 }
 
+#marknote-pdf-panel .pp-expiry {
+  font-size: 11px;
+  color: #6b7280;
+  margin: -6px 0 10px;
+}
+
 #marknote-pdf-panel textarea {
   width: 100%;
   min-height: 64px;
@@ -337,4 +343,11 @@ mark.marknote-highlight {
 
 .hidden {
   display: none;
+}
+
+/* ---- Keyboard accessibility ---- */
+
+:focus-visible {
+  outline: 2px solid #facc15;
+  outline-offset: 2px;
 }
