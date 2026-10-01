@@ -1,8 +1,18 @@
 # MarkNote — PDF & Web Highlighter + Notes
 
-> v0.9.0 — PDF investigation phase (vanilla JS, chrome.storage.local, no backend, no PDF highlighting yet).
+> v0.10.0 — PDF viewer with highlighting + notes (vanilla JS, bundled PDF.js, chrome.storage.local, no backend).
 
-## Scope of v0.9.0
+## Scope of v0.10.0
+
+Extension-owned viewer at `pdf/viewer.html` (PDF.js 3.4.120 vendored). Web system untouched. See `pdf/PDF_ARCHITECTURE.md`.
+
+What works (new in v0.10.0):
+
+- PDF tabs open in MarkNote via popup **Open in MarkNote** or manager Open page; viewer renders canvas + selectable text layer per page (lazy)
+- Select text → toolbar → 🟡 Highlight / 📝 Note, with note panel, markers, edit/delete — stored as `pdf-highlight`/`pdf-note` with `docId` + `pageNumber`, same 7-day expiry
+- Reload + Activate restores highlights/markers per document (graceful unavailable handling); viewer controls and scroll unaffected
+
+## Scope of v0.9.0 (kept)
 
 Architecture + detection only. Web system untouched. See `pdf/PDF_ARCHITECTURE.md`.
 

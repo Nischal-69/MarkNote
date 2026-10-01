@@ -1,7 +1,6 @@
-# MarkNote PDF Architecture — v0.9.0 (investigation phase)
+# MarkNote PDF Architecture — v0.10.0 (viewer implemented)
 
-> Status: architecture + detection only. **No PDF highlighting is implemented yet.**
-> The existing web highlighting/storage system is untouched.
+> Status: extension-owned viewer implemented. Web system untouched.
 
 ## 1. Findings: the Chrome PDF environment
 
@@ -52,11 +51,13 @@ extension respects. (\* `embedded` is concluded only when the scan finds frames.
 - **Phase A — done (v0.9.0):** `pdf/pdf-detector.js` classification +
   `MARKNOTE_PDF_SCAN` read-only probe + popup PDF states + PDF storage
   metadata (`docId`, `pdfUrl`, `pageNumber`, types `pdf-highlight`/`pdf-note`).
-- **Phase B — next:** an **extension-owned viewer page** (`pdf/viewer.html`)
-  bundling PDF.js. PDF tabs are routed there (redirect/intercept + an
-  "Open in MarkNote" entry point). Because the viewer DOM is ours, text-layer
-  selection and highlight overlays work exactly like the web system, anchored
-  by `{ docId, pageNumber, selectedText, surroundingText }`.
+- **Phase B — done (v0.10.0):** extension-owned viewer page (`pdf/viewer.html`,
+  PDF.js 3.4.120 vendored in `pdf/vendor/`). PDF tabs open there via the popup's
+  **Open in MarkNote** button or the manager's Open page action. Canvas +
+  selectable text layer per page (lazy-rendered), MarkNote toolbar
+  (Highlight/Note), note panel + markers, activation-gated restore anchored by
+  `{ docId, pageNumber, selectedText, surroundingText }` (exact, then
+  whitespace/case-tolerant multi-node matching; failures kept stored).
 - **Phase C — later:** restore/share flows reuse the existing
   `saveAnnotation/getAnnotations/updateAnnotation/deleteAnnotation` helpers
   and the 7-day expiry unchanged.
@@ -99,13 +100,12 @@ empty `docId`/`pdfUrl`/`pageNumber`, and edits never move anchors or timers.
 - `file://` PDFs require the user to enable "Allow access to file URLs".
 - `chrome://`, Web Store, and other restricted pages remain fully off-limits.
 
-## 7. Verification checklist for this phase
+## 7. Verification checklist (v0.10.0 — test with multiple PDFs)
 
-- [ ] New tab on `https://…/*.pdf` → popup shows `PDF` pill, Activate disabled,
-      note "PDF annotation arrives in a later batch".
-- [ ] Normal page → popup behaves exactly as v0.8.0 (Activate works, counts live).
-- [ ] Page with an embedded PDF → popup notes the embedded document, Activate stays enabled.
-- [ ] `node --check` clean on `pdf/pdf-detector.js`, `storage/storage.js`,
-      `content/content.js`, `popup/popup.js`.
-- [ ] Detector spot-checks: `.pdf?query`, uppercase `.PDF`, viewer URL,
-      `chrome://`, `blob:` classify as documented.
+- [ ] PDF tab → popup shows `PDF` pill + **Open in MarkNote** → viewer loads with page count.
+- [ ] Viewer → Activate → select text → toolbar → Highlight and Note both work.
+- [ ] Reload viewer URL → Activate → highlights + markers restore with toast.
+- [ ] Manager → Open page on a PDF annotation → lands in the viewer.
+- [ ] Unavailable text (edited PDF): kept stored, page untouched, console warning.
+- [ ] Viewer controls unaffected: scroll, page indicator, sticky bar all normal.
+- [ ] Web highlighting regression: normal pages behave exactly as v0.8.0.

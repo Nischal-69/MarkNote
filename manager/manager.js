@@ -173,7 +173,13 @@
     openBtn.type = 'button';
     openBtn.textContent = 'Open page';
     openBtn.addEventListener('click', () => {
-      if (a.url) {
+      // PDF annotations reopen inside MarkNote's own viewer (restorable);
+      // web annotations open the original page.
+      if (a.type && a.type.indexOf('pdf-') === 0 && a.pdfUrl) {
+        chrome.tabs.create({
+          url: `${chrome.runtime.getURL('pdf/viewer.html')}?file=${encodeURIComponent(a.pdfUrl)}`,
+        });
+      } else if (a.url) {
         chrome.tabs.create({ url: a.url });
       }
     });

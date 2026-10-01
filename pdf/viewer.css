@@ -1,0 +1,340 @@
+/* MarkNote PDF Viewer — v0.10.0. Own-DOM viewer: neutral page, overlay UI. */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #525659;
+  --bar: #17181c;
+  --bar-text: #f3f4f6;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --accent: #facc15;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#viewerBar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--bar);
+  color: var(--bar-text);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #111827;
+  border: 1px solid #333;
+  color: #facc15;
+  font-weight: 700;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand-text h1 {
+  font-size: 14px;
+}
+
+.brand-text p {
+  font-size: 11px;
+  color: #b6bac2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 46vw;
+}
+
+.bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.page-indicator {
+  font-size: 12px;
+  color: #b6bac2;
+  font-variant-numeric: tabular-nums;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #3a3d45;
+  color: #b6bac2;
+}
+
+.pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6b7280;
+}
+
+.pill.is-active {
+  color: #86efac;
+  border-color: #22c55e;
+}
+
+.pill.is-active .pill-dot {
+  background: #22c55e;
+}
+
+.btn-small {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-small:hover {
+  background: #fde047;
+}
+
+.viewer-error {
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 14px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.viewer-status {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  display: none;
+  padding: 8px 16px;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+#pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 12px 60px;
+}
+
+.pdf-page {
+  position: relative;
+  background: var(--card);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.pdf-page canvas {
+  display: block;
+}
+
+.pdf-textlayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  line-height: 1;
+}
+
+.pdf-textlayer span {
+  position: absolute;
+  white-space: pre;
+  transform-origin: left top;
+  color: transparent;
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.pdf-textlayer span::selection {
+  background: rgba(0, 90, 200, 0.25);
+}
+
+/* ---- MarkNote overlay UI (same visual language as web) ---- */
+
+mark.marknote-highlight {
+  background-color: #ffeb3b !important;
+  color: inherit !important;
+  border-radius: 2px !important;
+}
+
+.marknote-note-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: super;
+  font-size: 11px;
+  line-height: 1;
+  margin-left: 3px;
+  padding: 1px 3px;
+  background: #ffffff;
+  border: 1px solid #facc15;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#marknote-pdf-toolbar {
+  position: fixed;
+  z-index: 400;
+  flex-direction: row;
+  gap: 6px;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#marknote-pdf-toolbar button {
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #f9fafb;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#pdf-highlight-btn {
+  background: #fef08a !important;
+  border-color: #facc15 !important;
+}
+
+#marknote-pdf-panel {
+  position: fixed;
+  z-index: 400;
+  width: 300px;
+  max-width: calc(100vw - 16px);
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+  color: #111827;
+  line-height: 1.5;
+}
+
+#marknote-pdf-panel .pp-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+#marknote-pdf-panel .pp-selected {
+  font-size: 12px;
+  color: #4b5563;
+  background: #f9fafb;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  max-height: 64px;
+  overflow: hidden;
+}
+
+#marknote-pdf-panel .pp-note {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 140px;
+  overflow-y: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+#marknote-pdf-panel textarea {
+  width: 100%;
+  min-height: 64px;
+  resize: vertical;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+#marknote-pdf-panel .pp-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+#marknote-pdf-panel .pp-actions button {
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+#marknote-pdf-panel .pp-save {
+  background: #111827;
+  border-color: #111827;
+  color: #ffffff;
+}
+
+#marknote-pdf-panel .pp-delete {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.hidden {
+  display: none;
+}

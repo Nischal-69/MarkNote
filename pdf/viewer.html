@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarkNote PDF Viewer</title>
+  <link rel="stylesheet" href="viewer.css" />
+</head>
+<body>
+  <header id="viewerBar" data-marknote="viewer-bar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">M</div>
+      <div class="brand-text">
+        <h1>MarkNote PDF</h1>
+        <p id="docTitle">Loading…</p>
+      </div>
+    </div>
+    <div class="bar-right">
+      <span id="pageIndicator" class="page-indicator" aria-live="polite">–</span>
+      <span id="viewerPill" class="pill" role="status">
+        <span class="pill-dot" aria-hidden="true"></span>
+        <span id="viewerPillText">Idle</span>
+      </span>
+      <button id="viewerActivateBtn" class="btn-small" type="button">Activate MarkNote</button>
+    </div>
+  </header>
+
+  <p id="viewerError" class="viewer-error hidden" role="alert"></p>
+  <p id="viewerStatus" class="viewer-status" role="status" aria-live="polite"></p>
+
+  <main id="pages" aria-label="PDF pages"></main>
+
+  <div id="marknote-pdf-toolbar" data-marknote="toolbar" style="display:none">
+    <button id="pdf-highlight-btn" type="button" data-marknote="highlight-btn" title="Highlight selection">🟡 Highlight</button>
+    <button id="pdf-note-btn" type="button" data-marknote="note-btn" title="Add note">📝 Note</button>
+  </div>
+
+  <div id="marknote-pdf-panel" data-marknote="note-panel" style="display:none"></div>
+
+  <script src="vendor/pdf.min.js"></script>
+  <script src="../storage/storage.js"></script>
+  <script src="viewer.js"></script>
+</body>
+</html>

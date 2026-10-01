@@ -4,6 +4,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   const activateBtn = document.getElementById('activateBtn');
+  const viewerBtn = document.getElementById('viewerBtn');
   const statusMsg = document.getElementById('statusMsg');
   const activePill = document.getElementById('activePill');
   const activePillText = document.getElementById('activePillText');
@@ -56,9 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // with a clear message instead of a connection error.
       const pdf = globalThis.MarkNotePdf;
       if (pdf && currentTab.url) {
+        if (currentTab.url.startsWith(chrome.runtime.getURL('pdf/viewer.html'))) {
+          throw new Error('This PDF is already open in MarkNote. Use Activate in the viewer bar.');
+        }
         const kind = pdf.classifyTabUrl(currentTab.url).kind;
         if (kind === 'direct-pdf' || kind === 'chrome-viewer') {
-          throw new Error('This is a PDF document. PDF annotation is coming in a later batch.');
+          throw new Error('This is a PDF document. Open it in MarkNote to annotate it.');
         }
       }
 
@@ -93,6 +97,16 @@ document.addEventListener('DOMContentLoaded', () => {
         notesList.appendChild(empty);
       });
     }
+  });
+
+  viewerBtn.addEventListener('click', () => {
+    if (!currentTab || !currentTab.url) {
+      return;
+    }
+    chrome.tabs.create({
+      url: `${chrome.runtime.getURL('pdf/viewer.html')}?file=${encodeURIComponent(currentTab.url)}`,
+    });
+    window.close();
   });
 
   managerBtn.addEventListener('click', () => {
@@ -192,8 +206,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const info = pdf.classifyTabUrl(currentTab.url);
+    if (currentTab.url.startsWith(chrome.runtime.getURL('pdf/viewer.html'))) {
+      renderPdfState('This PDF is already open in MarkNote — use Activate in the viewer bar.', true, false);
+      return;
+    }
     if (info.kind === 'direct-pdf' || info.kind === 'chrome-viewer') {
-      renderPdfState('PDF document detected — PDF annotation arrives in a later batch. Web highlighting is unavailable inside the built-in viewer.');
+      renderPdfState('PDF document detected — open it in MarkNote to highlight text and add notes.', true, info.kind === 'direct-pdf');
       return;
     }
     if (info.kind !== 'web' || currentTab.id === undefined) {
@@ -214,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function renderPdfState(message, disableActivate = true) {
+  function renderPdfState(message, disableActivate = true, offerViewer = false) {
     pdfLocked = true;
     activePill.classList.remove('is-loading', 'is-active');
     activePill.classList.add('is-pdf');
@@ -223,6 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
     pdfMsg.classList.remove('hidden');
     if (disableActivate) {
       activateBtn.disabled = true;
+      // Offer the supported path: open the PDF in MarkNote's own viewer.
+      if (offerViewer) {
+        activateBtn.style.display = 'none';
+        viewerBtn.classList.remove('hidden');
+      }
     }
   }
 
