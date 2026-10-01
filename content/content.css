@@ -1,0 +1,277 @@
+/* MarkNote Content Styles — v0.5.0 gated restoration (extends v0.4.0) */
+
+/* Active page state hook. */
+.marknote-active {
+  /* Intentionally minimal — do not alter page layout or text. */
+}
+
+/* ---- Indicator: now "MarkNote Active ×" with clickable close ---- */
+#marknote-indicator {
+  position: fixed !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 8px 6px 12px !important;
+  background: #111827 !important;
+  color: #facc15 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  line-height: 1.4 !important;
+  pointer-events: auto !important;
+}
+
+#marknote-indicator .marknote-indicator-label {
+  pointer-events: none !important;
+}
+
+#marknote-indicator-close {
+  width: 20px !important;
+  height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+}
+
+#marknote-indicator-close:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ---- Floating toolbar near selection ---- */
+#marknote-toolbar {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  display: none; /* toggled to flex via JS */
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+#marknote-toolbar button {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 7px !important;
+  background: #f9fafb !important;
+  color: #111827 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 6px 10px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  line-height: 1.3 !important;
+}
+
+#marknote-toolbar button:hover {
+  background: #f3f4f6 !important;
+  border-color: #d1d5db !important;
+}
+
+#marknote-btn-highlight {
+  background: #fef08a !important;
+  border-color: #facc15 !important;
+}
+
+#marknote-btn-highlight:hover {
+  background: #fde047 !important;
+}
+
+/* ---- Highlights: obvious but layout-safe (stays inline) ---- */
+mark.marknote-highlight {
+  background-color: #ffeb3b !important;
+  color: inherit !important;
+  border-radius: 2px !important;
+  padding: 0 1px !important;
+  display: inline !important;
+  box-decoration-break: clone !important;
+  -webkit-box-decoration-break: clone !important;
+}
+
+/* ---- Note marker: small inline indicator next to highlighted area ---- */
+.marknote-note-marker {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: super !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  margin-left: 3px !important;
+  padding: 1px 3px !important;
+  background: #ffffff !important;
+  border: 1px solid #facc15 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.marknote-note-marker:hover {
+  background: #fef9c3 !important;
+}
+
+/* ---- Note panel: floating editor / viewer near selection ---- */
+#marknote-note-panel {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  width: 300px !important;
+  max-width: calc(100vw - 16px) !important;
+  padding: 12px !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 13px !important;
+  color: #111827 !important;
+  line-height: 1.5 !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+#marknote-note-panel .marknote-panel-title {
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  margin-bottom: 6px !important;
+}
+
+#marknote-note-panel .marknote-panel-selected {
+  font-size: 12px !important;
+  color: #4b5563 !important;
+  background: #f9fafb !important;
+  border: 1px solid #f0f0f0 !important;
+  border-radius: 8px !important;
+  padding: 6px 8px !important;
+  margin-bottom: 8px !important;
+  max-height: 64px !important;
+  overflow: hidden !important;
+}
+
+#marknote-note-panel .marknote-panel-label {
+  font-weight: 600 !important;
+}
+
+#marknote-note-panel .marknote-panel-note {
+  font-size: 13px !important;
+  color: #111827 !important;
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  margin-bottom: 10px !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  max-height: 140px !important;
+  overflow-y: auto !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+#marknote-note-panel .marknote-panel-textarea {
+  width: 100% !important;
+  min-height: 64px !important;
+  resize: vertical !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  color: #111827 !important;
+  outline: none !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+#marknote-note-panel .marknote-panel-textarea:focus {
+  border-color: #facc15 !important;
+  box-shadow: 0 0 0 2px #fef9c3 !important;
+}
+
+#marknote-note-panel .marknote-panel-actions {
+  display: flex !important;
+  gap: 6px !important;
+  margin-top: 10px !important;
+  justify-content: flex-end !important;
+}
+
+#marknote-note-panel .marknote-panel-actions button {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 7px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+  cursor: pointer !important;
+  line-height: 1.3 !important;
+}
+
+#marknote-note-panel .marknote-btn-save,
+#marknote-note-panel .marknote-btn-edit {
+  background: #111827 !important;
+  border-color: #111827 !important;
+  color: #ffffff !important;
+}
+
+#marknote-note-panel .marknote-btn-save:hover,
+#marknote-note-panel .marknote-btn-edit:hover {
+  background: #1f2937 !important;
+}
+
+#marknote-note-panel .marknote-btn-cancel {
+  background: #f9fafb !important;
+  color: #374151 !important;
+}
+
+#marknote-note-panel .marknote-btn-delete {
+  background: #ffffff !important;
+  color: #b91c1c !important;
+  border-color: #fecaca !important;
+}
+
+#marknote-note-panel .marknote-btn-delete:hover {
+  background: #fef2f2 !important;
+}
+
+/* ---- Restore status: small transient toast, never interactive ---- */
+#marknote-restore-status {
+  position: fixed !important;
+  bottom: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483647 !important;
+  display: none;
+  padding: 8px 16px !important;
+  background: #111827 !important;
+  color: #f9fafb !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  white-space: nowrap !important;
+}

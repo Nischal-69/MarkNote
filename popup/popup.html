@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarkNote</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main class="popup">
+    <header class="header">
+      <div class="logo" aria-hidden="true">M</div>
+      <div class="title-wrap">
+        <h1 class="title">MarkNote</h1>
+        <p class="subtitle">PDF &amp; Web Highlighter + Notes</p>
+      </div>
+    </header>
+
+    <p class="description">Highlight text and add notes while reading.</p>
+
+    <button id="activateBtn" class="btn-primary" type="button">
+      Activate Highlighter
+    </button>
+
+    <p id="statusMsg" class="status" role="status" aria-live="polite"></p>
+
+    <div class="storage-info" aria-live="polite">
+      <span id="annotationCount">Annotations: …</span>
+      <span class="storage-sep" aria-hidden="true">&middot;</span>
+      <span class="storage-note">Saved for 7 days</span>
+    </div>
+
+    <footer class="footer">
+      <span class="footer-text">v0.6.0 &middot; 7-Day Expiry</span>
+      <button id="infoBtn" class="info-btn" type="button" title="About MarkNote" aria-label="About MarkNote">i</button>
+    </footer>
+
+    <div id="infoPanel" class="info-panel hidden">
+      <p>Settings coming soon. Future versions will support highlight colors, notes, and PDF support.</p>
+    </div>
+  </main>
+
+  <script src="../storage/storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
