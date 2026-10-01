@@ -20,7 +20,7 @@ Pages stay untouched until the user activates MarkNote. Keeps all v0.1–v0.4 be
 
 What works (new/changed in v0.5.0):
 
-- Page load only preloads (read-only `getAnnotations`) — zero DOM writes before activation
+- Page load only preloads (reads storage, no DOM writes) before activation
 - Activation restores this URL's annotations: highlight + `📝` markers, matched by URL + selectedText + surroundingText (+ pageTitle soft signal)
 - Fuzzy offsets tolerate whitespace/case drift; word-overlap scoring picks the best slot for duplicate text; cross-node fallback via bounded `window.find` walk
 - Not found → kept stored, page untouched, counted as unavailable (console warning, never deleted)
@@ -37,8 +37,7 @@ What works (new in v0.4.0):
 - Annotation model: `{ id, url, pageTitle, selectedText, surroundingText, note, highlightColor, createdAt, expiresAt }` (+ `type`)
 - Highlight → `saveAnnotation({type:'highlight', note:''})`, tags marks with `data-annotation-id`
 - Note save/edit/delete → save/update/delete in storage; in-memory `Map` is only a cache
-- Page load auto-restores this page's annotations (exact-node match, then `window.find` fallback for cross-node)
-- `expiresAt` stored (+7 days) but NOT enforced — no deletion system in this batch
+- Activation restores this page's annotations (gated since v0.5.0; exact-node match, then `window.find` fallback for cross-node)
 
 ## Scope of v0.3.0 (kept)
 
@@ -96,6 +95,7 @@ marknote/
    - Subtitle: **PDF & Web Highlighter + Notes**
    - Text: **Highlight text and add notes while reading.**
    - Button: **Activate Highlighter**
+   - Section: **Annotations: N** + **Saved for 7 days**
 4. Click **Activate Highlighter**
    - Popup should close
    - A dark pill badge **"MarkNote Active ×"** appears top-right of the page
@@ -121,17 +121,23 @@ marknote/
 
 ## Test Expiry (v0.6.0)
 
-1. Highlight + note as usual → popup shows `Annotations: N` growing.
-2. To simulate expiry, age one annotation in the page console:
+> Run these snippets in an **extension console** — the service-worker console
+> (`chrome://extensions` → Developer mode → MarkNote → **Inspect views:
+> service worker`) or the popup console (right-click the popup → **Inspect**).
+> A normal page console cannot reach `chrome.storage` or the content-script
+> context, so the snippets below will not work there.
+
+1. Highlight + note as usual → reopen the popup, `Annotations: N` has grown.
+2. To simulate expiry, age every stored annotation past its deadline:
    ```js
-   const S = window.MarkNoteStorage;
-   const all = await S.getAnnotations(location.href);
-   const m = (await chrome.storage.local.get(S.STORAGE_KEY))[S.STORAGE_KEY];
-   m[all[0].id].expiresAt = Date.now() - 1000;
-   await chrome.storage.local.set({ [S.STORAGE_KEY]: m });
+   const KEY = 'marknote_annotations';
+   const m = (await chrome.storage.local.get(KEY))[KEY];
+   for (const id of Object.keys(m)) m[id].expiresAt = Date.now() - 1000;
+   await chrome.storage.local.set({ [KEY]: m });
    ```
-3. Refresh → activate → the aged annotation is gone (deleted by the sweep, never restored); valid ones restore with the toast.
-4. Restart Chrome → counts and remaining annotations persist; the 7-day clock kept running (no reset).
+3. Refresh the test page → activate → nothing restores (aged annotations were deleted by the sweep); reopen the popup → count dropped.
+4. Create a fresh highlight → refresh → activate → it restores (valid ones are untouched).
+5. Restart Chrome → counts and remaining annotations persist; the 7-day clock kept running (no reset).
 
 ## Test Persistence (v0.4.0, gated since v0.5.0)
 
@@ -143,19 +149,24 @@ marknote/
 
 ## Inspecting stored data (development)
 
-- **Option A — Extension storage page:** open `chrome://extensions` → enable Developer mode → MarkNote **Inspect views: service worker** (or any page console) → Application/Storage is not available in service-worker DevTools, so use console:
+> Use an **extension console** (service-worker console or popup console — see
+> note above). A normal page console has no access to `chrome.storage.local`.
+
+- **List everything:**
   ```js
   chrome.storage.local.get('marknote_annotations').then(r => console.log(r.marknote_annotations));
   ```
-- **Option B — Page console:** on any MarkNote-enabled page, run:
+- **List via the storage helper** (popup console only — the popup loads `storage/storage.js`):
   ```js
-  window.MarkNoteStorage.getAnnotations(location.href).then(a => console.log(a));
+  MarkNoteStorage.getAnnotations().then(a => console.log(a));
+  MarkNoteStorage.getAnnotations(location.href).then(a => console.log(a));
   ```
-- **Option C — Clear during testing:**
+  Note: in the popup console, `location.href` is the popup page — pass a page URL string to filter, or call with no arguments for all annotations.
+- **Clear during testing:**
   ```js
   chrome.storage.local.remove('marknote_annotations');
   ```
-  then refresh — page should show no restored highlights.
+  then refresh — activating restores nothing.
 - Data shape per annotation:
   ```json
   { "id": "mn-...", "url": "https://... (no #hash)", "pageTitle": "...", "selectedText": "...", "surroundingText": "...", "note": "", "highlightColor": "yellow", "type": "highlight|note", "createdAt": 123, "expiresAt": 123 }
@@ -180,9 +191,6 @@ marknote/
 - **No indicator / "Could not establish connection"** in popup → reload the target tab, then reload the extension at `chrome://extensions` → try again.
 - **Check logs:** right-click popup → Inspect, or `chrome://extensions` → *Inspect views: service worker* for background logs, or page DevTools console for `[MarkNote]` logs.
 
-## Next Steps (not in v0.4.0)
+## Next Steps (not in v0.6.0)
 
-- 7-day expiry enforcement
 - PDF support
-#   M a r k N o t e - P D F - W e b - H i g h l i g h t e r - N o t e s  
- 
