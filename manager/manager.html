@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notes Manager — MarkNote</title>
+  <link rel="stylesheet" href="manager.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">M</div>
+        <div>
+          <h1>Notes Manager</h1>
+          <p>MarkNote &middot; PDF &amp; Web Highlighter + Notes</p>
+        </div>
+      </div>
+      <p id="countLine" class="count" aria-live="polite">…</p>
+    </header>
+
+    <div class="toolbar">
+      <input
+        id="searchInput"
+        class="search"
+        type="search"
+        placeholder="Search title, domain, text, note…"
+        aria-label="Search annotations"
+        autocomplete="off"
+      />
+      <div class="filters" role="tablist" aria-label="Filters">
+        <button class="filter is-on" type="button" data-filter="all" role="tab" aria-selected="true">All</button>
+        <button class="filter" type="button" data-filter="web" role="tab" aria-selected="false">Web</button>
+        <button class="filter" type="button" data-filter="soon" role="tab" aria-selected="false" title="2 days or less remaining">Expiring Soon</button>
+      </div>
+    </div>
+
+    <p id="statusMsg" class="status" role="status" aria-live="polite"></p>
+
+    <main id="list" class="list" aria-live="polite"></main>
+  </div>
+
+  <script src="../storage/storage.js"></script>
+  <script src="manager.js"></script>
+</body>
+</html>

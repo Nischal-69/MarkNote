@@ -8,39 +8,62 @@
 </head>
 <body>
   <main class="popup">
-    <header class="header">
+    <header class="brand">
       <div class="logo" aria-hidden="true">M</div>
-      <div class="title-wrap">
-        <h1 class="title">MarkNote</h1>
-        <p class="subtitle">PDF &amp; Web Highlighter + Notes</p>
+      <div class="brand-text">
+        <h1 class="brand-name">MarkNote</h1>
+        <p class="brand-tag">PDF &amp; Web Highlighter + Notes</p>
       </div>
+      <span id="activePill" class="pill is-loading" role="status" aria-live="polite">
+        <span class="pill-dot" aria-hidden="true"></span>
+        <span id="activePillText">…</span>
+      </span>
     </header>
 
-    <p class="description">Highlight text and add notes while reading.</p>
-
     <button id="activateBtn" class="btn-primary" type="button">
-      Activate Highlighter
+      🟡 Activate Highlighter
     </button>
 
     <p id="statusMsg" class="status" role="status" aria-live="polite"></p>
+    <p id="pdfMsg" class="pdf-note hidden" role="status"></p>
 
-    <div class="storage-info" aria-live="polite">
-      <span id="annotationCount">Annotations: …</span>
-      <span class="storage-sep" aria-hidden="true">&middot;</span>
-      <span class="storage-note">Saved for 7 days</span>
-    </div>
+    <section class="stats" aria-label="Annotation statistics">
+      <div class="stat">
+        <span class="stat-num" id="totalCount">–</span>
+        <span class="stat-label">Saved Annotations</span>
+      </div>
+      <div class="stat-sep" aria-hidden="true"></div>
+      <div class="stat">
+        <span class="stat-num" id="pageCount">–</span>
+        <span class="stat-label">On this page</span>
+      </div>
+    </section>
+    <p class="expiry">
+      <span class="expiry-label">Expiring</span>
+      <span aria-hidden="true">&middot;</span>
+      <span>Within 7 days</span>
+    </p>
+
+    <button id="viewNotesBtn" class="btn-ghost" type="button" aria-expanded="false" aria-controls="notesList">
+      View Notes
+    </button>
+    <div id="notesList" class="notes" aria-live="polite"></div>
+    <button id="managerBtn" class="btn-ghost btn-manager" type="button">
+      Open Notes Manager
+    </button>
 
     <footer class="footer">
-      <span class="footer-text">v0.6.0 &middot; 7-Day Expiry</span>
-      <button id="infoBtn" class="info-btn" type="button" title="About MarkNote" aria-label="About MarkNote">i</button>
+      <button id="settingsBtn" class="link-btn" type="button" aria-expanded="false" aria-controls="settingsPanel">Settings</button>
+      <span class="footer-text">v0.9.0</span>
     </footer>
 
-    <div id="infoPanel" class="info-panel hidden">
-      <p>Settings coming soon. Future versions will support highlight colors, notes, and PDF support.</p>
+    <div id="settingsPanel" class="settings hidden">
+      <p>Settings coming soon. Future versions will support highlight colors, note options, and PDF support.</p>
     </div>
   </main>
 
   <script src="../storage/storage.js"></script>
+  <script src="../pdf/pdf-detector.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

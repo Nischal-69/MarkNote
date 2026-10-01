@@ -113,6 +113,22 @@
       return false;
     }
 
+    // Read-only probe: does this host page embed any PDFs? No DOM writes.
+    // Lets the popup report embedded PDFs without touching page content.
+    if (message.type === 'MARKNOTE_PDF_SCAN') {
+      let embedded = [];
+      try {
+        const pdf = globalThis.MarkNotePdf;
+        if (pdf && typeof pdf.scanEmbedded === 'function') {
+          embedded = pdf.scanEmbedded(document) || [];
+        }
+      } catch (e) {
+        embedded = [];
+      }
+      sendResponse({ ok: true, embedded });
+      return false;
+    }
+
     return false;
   });
 

@@ -1,8 +1,30 @@
 # MarkNote — PDF & Web Highlighter + Notes
 
-> v0.6.0 — 7-day annotation expiration (vanilla JS, chrome.storage.local, no backend, no PDF yet).
+> v0.9.0 — PDF investigation phase (vanilla JS, chrome.storage.local, no backend, no PDF highlighting yet).
 
-## Scope of v0.6.0
+## Scope of v0.9.0
+
+Architecture + detection only. Web system untouched. See `pdf/PDF_ARCHITECTURE.md`.
+
+What works (new in v0.9.0):
+
+- `pdf/pdf-detector.js`: URL classification (`direct-pdf` / `chrome-viewer` / `web` / `restricted` / `special`), read-only embedded-PDF scan, injectability contract
+- Content script answers read-only `MARKNOTE_PDF_SCAN`; popup shows a `PDF` pill, disables Activate on viewer-owned PDFs, and notes embedded PDFs on host pages
+- Storage carries PDF metadata (`docId`, `pdfUrl`, `pageNumber`, `pdf-highlight`/`pdf-note`) + `pdfDocumentId()` / `buildPdfAnnotation()`; no UI writes them yet
+- No new permissions; no highlighting inside the built-in viewer
+
+## Scope of v0.8.0 (kept)
+
+Full-page manager at `manager/manager.html`, opened via **Open Notes Manager** in the popup. Keeps all v0.1–v0.7 behavior otherwise.
+
+What works (new in v0.8.0):
+
+- Clean card list: page title, domain, highlighted text, note, created date, days remaining
+- Actions per item: Open page, Edit note (inline), Delete (confirm), Copy highlighted text (clipboard + fallback)
+- Live search across title, domain, highlighted text, note; filters All / Web / Expiring Soon (≤2 days)
+- Auto-refreshes on storage changes; popup inline View Notes list unchanged
+
+## Scope of v0.6.0 (kept)
 
 Annotations expire 7 days after creation. Keeps all v0.1–v0.5 behavior otherwise.
 

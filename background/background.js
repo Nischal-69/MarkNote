@@ -1,9 +1,10 @@
-// MarkNote Background Service Worker (MV3) — v0.6.0 expiration
+// MarkNote Background Service Worker (MV3) — v0.9.0 PDF investigation
 // Storage lives in chrome.storage.local; expiry is enforced here on browser/
 // extension start plus in the content script on page load/activation.
 // Timestamp-based (Date.now) — restarts never reset the 7-day timer. No backend.
+// PDF detection lives in pdf/pdf-detector.js; no PDF highlighting yet.
 
-const MARKNOTE_VERSION = '0.6.0';
+const MARKNOTE_VERSION = '0.9.0';
 
 try {
   importScripts('../storage/storage.js');
