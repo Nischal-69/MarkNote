@@ -287,6 +287,33 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   border-radius: 50%;
 }
 
+/* ---- Recolor picker: small popup on existing-highlight click ---- */
+#marknote-pdf-recolor-panel {
+  position: fixed;
+  z-index: 400;
+  flex-direction: row;
+  gap: 6px;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#marknote-pdf-recolor-panel .pdf-color-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
 #pdf-highlight-btn {
   background: #fef08a !important;
   border-color: #facc15 !important;

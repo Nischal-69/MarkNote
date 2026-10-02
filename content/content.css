@@ -144,6 +144,32 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   border-radius: 50% !important;
 }
 
+/* ---- Recolor picker: small popup on existing-highlight click ---- */
+#marknote-recolor-panel {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  display: none; /* toggled to flex via JS */
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+#marknote-recolor-panel button {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 50% !important;
+  background: #f9fafb !important;
+  cursor: pointer !important;
+  line-height: 1 !important;
+}
+
 /* ---- Note marker: small inline indicator next to highlighted area ---- */
 .marknote-note-marker {
   display: inline-flex !important;
@@ -296,6 +322,7 @@ mark.marknote-highlight[data-highlight-color="purple"] {
 
 /* ---- Keyboard accessibility (scoped to MarkNote UI only) ---- */
 #marknote-toolbar button:focus-visible,
+#marknote-recolor-panel button:focus-visible,
 #marknote-indicator-close:focus-visible,
 #marknote-note-panel button:focus-visible,
 .marknote-note-marker:focus-visible {

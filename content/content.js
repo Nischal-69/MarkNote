@@ -19,6 +19,7 @@
   const NOTE_MARKER_CLASS = 'marknote-note-marker';
   const NOTE_PANEL_ID = 'marknote-note-panel';
   const RESTORE_STATUS_ID = 'marknote-restore-status';
+  const RECOLOR_PANEL_ID = 'marknote-recolor-panel';
   const HIGHLIGHT_COLOR = 'yellow';
   const HIGHLIGHT_COLORS = [
     { name: 'yellow', emoji: '🟡', label: 'Yellow' },
@@ -49,6 +50,9 @@
   let highlightBtn = null;
   let colorBtns = [];
   let noteBtn = null;
+  let recolorEl = null;
+  let recolorAnnotationId = null;
+  let recolorMarks = [];
   // Gated restoration state. Page load only preloads (read-only); DOM is
   // touched exclusively by restoreOnActivate().
   let pendingAnnotations = null;
@@ -178,6 +182,7 @@
   function deactivate() {
     if (!isActive) {
       hideToolbar();
+      hideRecolorPanel();
       return;
     }
 
@@ -185,6 +190,7 @@
     lastRange = null;
     lastRect = null;
     hideToolbar();
+    hideRecolorPanel();
     hideNotePanel();
     hideRestoreStatus();
     clearSelection();
@@ -326,6 +332,145 @@
     toolbarEl.style.visibility = 'visible';
   }
 
+  // ---------- Recolor existing highlights (small picker on mark click) ----------
+
+  function isRecolorOpen() {
+    return !!(recolorEl && recolorEl.style.display !== 'none');
+  }
+
+  function ensureRecolorPanel() {
+    if (recolorEl && document.getElementById(RECOLOR_PANEL_ID)) {
+      return recolorEl;
+    }
+
+    recolorEl = document.createElement('div');
+    recolorEl.id = RECOLOR_PANEL_ID;
+    recolorEl.setAttribute('data-marknote', 'recolor-panel');
+    recolorEl.setAttribute('role', 'toolbar');
+    recolorEl.setAttribute('aria-label', 'Change highlight color');
+    recolorEl.style.display = 'none';
+    recolorEl.addEventListener('mousedown', (e) => e.preventDefault());
+    recolorEl.addEventListener('mouseup', (e) => e.stopPropagation());
+
+    for (const entry of HIGHLIGHT_COLORS) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'marknote-color-btn';
+      btn.setAttribute('data-marknote', 'recolor-btn');
+      btn.dataset.highlightColor = entry.name;
+      btn.title = `Change to ${entry.label}`;
+      btn.setAttribute('aria-label', `Change highlight to ${entry.label}`);
+      btn.textContent = entry.emoji;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyRecolor(entry.name).catch((err) => console.warn('[MarkNote] Recolor failed:', err));
+      });
+      recolorEl.appendChild(btn);
+    }
+
+    (document.body || document.documentElement).appendChild(recolorEl);
+    return recolorEl;
+  }
+
+  function onHighlightClick(e) {
+    if (!e || !e.target || !e.target.closest) {
+      return;
+    }
+    if (e.target.closest(`#${RECOLOR_PANEL_ID}`)) {
+      return; // picker button handlers do the work.
+    }
+    const mark = e.target.closest(`mark.${HIGHLIGHT_CLASS}`);
+    if (!mark) {
+      hideRecolorPanel();
+      return;
+    }
+    if (isPanelOpen()) {
+      hideRecolorPanel();
+      return;
+    }
+    // Never hijack an active text selection — the highlight toolbar owns that flow.
+    try {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+        hideRecolorPanel();
+        return;
+      }
+    } catch (err) {
+      // ignore
+    }
+    const annotationId = mark.dataset && mark.dataset.annotationId ? mark.dataset.annotationId : null;
+    let marks;
+    if (annotationId) {
+      try {
+        marks = Array.from(document.querySelectorAll(`mark.${HIGHLIGHT_CLASS}[data-annotation-id="${CSS.escape(annotationId)}"]`));
+      } catch (err) {
+        marks = [mark];
+      }
+      if (marks.length === 0) {
+        marks = [mark];
+      }
+    } else {
+      marks = [mark]; // DOM-only highlight (earlier save failed): recolor visually.
+    }
+    const x = typeof e.clientX === 'number' ? e.clientX : window.innerWidth / 2;
+    const y = typeof e.clientY === 'number' ? e.clientY : 100;
+    showRecolorPanel(annotationId, marks, x, y);
+  }
+
+  function showRecolorPanel(annotationId, marks, x, y) {
+    ensureRecolorPanel();
+    hideToolbar();
+    recolorAnnotationId = annotationId;
+    recolorMarks = marks || [];
+    recolorEl.style.display = 'flex';
+    recolorEl.style.visibility = 'hidden';
+
+    const w = recolorEl.offsetWidth || 190;
+    const h = recolorEl.offsetHeight || 40;
+    let left = x - w / 2;
+    let top = y + 12;
+    left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+    top = Math.max(8, Math.min(top, window.innerHeight - h - 8));
+
+    recolorEl.style.left = `${left}px`;
+    recolorEl.style.top = `${top}px`;
+    recolorEl.style.visibility = 'visible';
+  }
+
+  function hideRecolorPanel() {
+    recolorAnnotationId = null;
+    recolorMarks = [];
+    if (recolorEl) {
+      recolorEl.style.display = 'none';
+    }
+  }
+
+  async function applyRecolor(color) {
+    const highlightColor = normalizeHighlightColor(color);
+    const marks = recolorMarks.slice();
+    const annotationId = recolorAnnotationId;
+    hideRecolorPanel();
+    if (marks.length === 0) {
+      return;
+    }
+    applyColorToMarks(marks, highlightColor);
+    if (!annotationId) {
+      return; // visual-only; nothing was ever persisted.
+    }
+    const s = store();
+    if (!s) {
+      return;
+    }
+    try {
+      // Patch touches highlightColor only — note text and timers stay unchanged.
+      await s.updateAnnotation(annotationId, { highlightColor });
+      console.log(`[MarkNote] Highlight recolored to ${highlightColor}.`);
+    } catch (err) {
+      console.warn('[MarkNote] Recolor save failed, keeping visual change only:', err);
+    }
+    clearSelection();
+  }
+
   // ---------- Selection handling (unchanged) ----------
 
   function attachListeners() {
@@ -338,6 +483,7 @@
     document.addEventListener('mouseup', onMouseUp, false);
     document.addEventListener('keyup', onKeyUp, false);
     document.addEventListener('keydown', onKeyDown, false);
+    document.addEventListener('click', onHighlightClick, false);
     window.addEventListener('scroll', onScroll, true);
   }
 
@@ -349,6 +495,7 @@
       return;
     }
     hideToolbar();
+    hideRecolorPanel();
   }
 
   function onMouseUp(e) {
@@ -372,6 +519,10 @@
   }
 
   function onKeyDown(e) {
+    if (e.key === 'Escape' && isRecolorOpen()) {
+      hideRecolorPanel();
+      return;
+    }
     if (e.key === 'Escape' && isPanelOpen()) {
       e.stopPropagation();
       if (panelMode === 'view') {
@@ -389,6 +540,7 @@
       return;
     }
     hideToolbar();
+    hideRecolorPanel();
   }
 
   function handleSelection() {
@@ -736,6 +888,7 @@
     pendingPreview = truncate(raw, 200);
     const rect = lastRect && lastRect.width ? lastRect : lastRange.getBoundingClientRect();
     hideToolbar();
+    hideRecolorPanel();
     panelMode = 'create';
     panelNoteId = null;
     renderCreatePanel(rect);

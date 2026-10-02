@@ -11,6 +11,7 @@
   const MARKER_CLASS = 'marknote-note-marker';
   const HIGHLIGHT_COLOR = 'yellow';
   const HIGHLIGHT_COLORS = ['yellow', 'green', 'blue', 'pink', 'purple'];
+  const RECOLOR_PANEL_ID = 'marknote-pdf-recolor-panel';
 
   function normalizeHighlightColor(color) {
     const c = String(color || '').toLowerCase().trim();
@@ -46,6 +47,9 @@
   let panelNoteId = null;
   let pendingPreview = '';
   let statusTimer = null;
+  let recolorEl = null;
+  let recolorAnnotationId = null;
+  let recolorMarks = [];
   const rendered = new Set();
   const notes = new Map();
 
@@ -236,6 +240,7 @@
         return;
       }
       hideToolbar();
+      hideRecolorPanel();
     });
     pagesEl.addEventListener('mouseup', (e) => {
       if (!isActive || isMarkNoteUi(e.target)) {
@@ -250,10 +255,14 @@
       handleSelection();
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && panelMode !== 'closed') {
-        hidePanel();
+      if (e.key === 'Escape') {
+        hideRecolorPanel();
+        if (panelMode !== 'closed') {
+          hidePanel();
+        }
       }
     });
+    document.addEventListener('click', onHighlightClick);
   }
 
   async function activate() {
@@ -272,6 +281,7 @@
     lastRange = null;
     lastRect = null;
     hideToolbar();
+    hideRecolorPanel();
     hidePanel();
     clearSelection();
     pill.classList.remove('is-active');
@@ -318,6 +328,7 @@
   }
 
   function showToolbarNear(rect) {
+    hideRecolorPanel();
     toolbarEl.style.display = 'flex';
     toolbarEl.style.visibility = 'hidden';
     const w = toolbarEl.offsetWidth || 220;
@@ -336,6 +347,153 @@
 
   function hideToolbar() {
     toolbarEl.style.display = 'none';
+  }
+
+  // ---------- Recolor existing highlights (small picker on mark click) ----------
+  // Visual + storage only: touches the mark's color attribute and the saved
+  // annotation's highlightColor. Canvas/text-layer rendering is untouched.
+
+  function isRecolorOpen() {
+    return !!(recolorEl && recolorEl.style.display !== 'none');
+  }
+
+  function ensureRecolorPanel() {
+    if (recolorEl && document.getElementById(RECOLOR_PANEL_ID)) {
+      return recolorEl;
+    }
+    const COLORS = [
+      { name: 'yellow', emoji: '🟡', label: 'Yellow' },
+      { name: 'green', emoji: '🟢', label: 'Green' },
+      { name: 'blue', emoji: '🔵', label: 'Blue' },
+      { name: 'pink', emoji: '🩷', label: 'Pink' },
+      { name: 'purple', emoji: '🟣', label: 'Purple' },
+    ];
+    recolorEl = document.createElement('div');
+    recolorEl.id = RECOLOR_PANEL_ID;
+    recolorEl.setAttribute('data-marknote', 'recolor-panel');
+    recolorEl.setAttribute('role', 'toolbar');
+    recolorEl.setAttribute('aria-label', 'Change highlight color');
+    recolorEl.style.display = 'none';
+    recolorEl.addEventListener('mousedown', (e) => e.preventDefault());
+    recolorEl.addEventListener('mouseup', (e) => e.stopPropagation());
+    for (const entry of COLORS) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pdf-color-btn';
+      btn.setAttribute('data-marknote', 'recolor-btn');
+      btn.dataset.color = entry.name;
+      btn.title = `Change to ${entry.label}`;
+      btn.setAttribute('aria-label', `Change highlight to ${entry.label}`);
+      btn.textContent = entry.emoji;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyRecolor(entry.name).catch((err) => console.warn('[MarkNote] PDF recolor failed:', err));
+      });
+      recolorEl.appendChild(btn);
+    }
+    document.body.appendChild(recolorEl);
+    return recolorEl;
+  }
+
+  function onHighlightClick(e) {
+    if (!e || !e.target || !e.target.closest) {
+      return;
+    }
+    if (e.target.closest(`#${RECOLOR_PANEL_ID}`)) {
+      return; // picker button handlers do the work.
+    }
+    const mark = e.target.closest(`mark.${HIGHLIGHT_CLASS}`);
+    if (!mark || !mark.closest('#pages')) {
+      hideRecolorPanel();
+      return;
+    }
+    if (panelMode !== 'closed') {
+      hideRecolorPanel();
+      return;
+    }
+    // Never hijack an active text selection — the highlight toolbar owns that flow.
+    try {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+        hideRecolorPanel();
+        return;
+      }
+    } catch (err) {
+      // ignore
+    }
+    const annotationId = mark.dataset && mark.dataset.annotationId ? mark.dataset.annotationId : null;
+    let marks;
+    if (annotationId) {
+      try {
+        marks = Array.from(pagesEl.querySelectorAll(`mark.${HIGHLIGHT_CLASS}[data-annotation-id="${CSS.escape(annotationId)}"]`));
+      } catch (err) {
+        marks = [mark];
+      }
+      if (marks.length === 0) {
+        marks = [mark];
+      }
+    } else {
+      marks = [mark]; // DOM-only highlight (earlier save failed): recolor visually.
+    }
+    const x = typeof e.clientX === 'number' ? e.clientX : window.innerWidth / 2;
+    const y = typeof e.clientY === 'number' ? e.clientY : 100;
+    showRecolorPanel(annotationId, marks, x, y);
+  }
+
+  function showRecolorPanel(annotationId, marks, x, y) {
+    ensureRecolorPanel();
+    hideToolbar();
+    recolorAnnotationId = annotationId;
+    recolorMarks = marks || [];
+    recolorEl.style.display = 'flex';
+    recolorEl.style.visibility = 'hidden';
+    const w = recolorEl.offsetWidth || 190;
+    const h = recolorEl.offsetHeight || 40;
+    let left = x - w / 2;
+    let top = y + 12;
+    left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+    top = Math.max(56, Math.min(top, window.innerHeight - h - 8));
+    recolorEl.style.left = `${left}px`;
+    recolorEl.style.top = `${top}px`;
+    recolorEl.style.visibility = 'visible';
+  }
+
+  function hideRecolorPanel() {
+    recolorAnnotationId = null;
+    recolorMarks = [];
+    if (recolorEl) {
+      recolorEl.style.display = 'none';
+    }
+  }
+
+  async function applyRecolor(color) {
+    const highlightColor = normalizeHighlightColor(color);
+    const marks = recolorMarks.slice();
+    const annotationId = recolorAnnotationId;
+    hideRecolorPanel();
+    if (marks.length === 0) {
+      return;
+    }
+    for (const mark of marks) {
+      if (mark) {
+        mark.dataset.highlightColor = highlightColor;
+      }
+    }
+    if (!annotationId) {
+      return; // visual-only; nothing was ever persisted.
+    }
+    const store = globalThis.MarkNoteStorage;
+    if (!store) {
+      return;
+    }
+    try {
+      // Patch touches highlightColor only — note text and timers stay unchanged.
+      await store.updateAnnotation(annotationId, { highlightColor });
+      console.log(`[MarkNote] PDF highlight recolored to ${highlightColor}.`);
+    } catch (err) {
+      console.warn('[MarkNote] PDF recolor save failed, keeping visual change only:', err);
+    }
+    clearSelection();
   }
 
   // ---------- Highlight + note (persisted like web) ----------
@@ -523,6 +681,7 @@
     pendingPreview = raw.replace(/\s+/g, ' ').trim().slice(0, 200);
     const rect = lastRect && lastRect.width ? lastRect : lastRange.getBoundingClientRect();
     hideToolbar();
+    hideRecolorPanel();
     panelMode = 'create';
     panelNoteId = null;
     renderPanel(
