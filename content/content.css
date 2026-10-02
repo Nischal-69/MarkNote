@@ -110,6 +110,40 @@ mark.marknote-highlight {
   -webkit-box-decoration-break: clone !important;
 }
 
+/* ---- Highlight colors (base rule above stays yellow default) ---- */
+mark.marknote-highlight[data-highlight-color="yellow"] {
+  background-color: #ffeb3b !important;
+}
+
+mark.marknote-highlight[data-highlight-color="green"] {
+  background-color: #bbf7d0 !important;
+}
+
+mark.marknote-highlight[data-highlight-color="blue"] {
+  background-color: #bfdbfe !important;
+}
+
+mark.marknote-highlight[data-highlight-color="pink"] {
+  background-color: #fecdd3 !important;
+}
+
+mark.marknote-highlight[data-highlight-color="purple"] {
+  background-color: #ddd6fe !important;
+}
+
+/* ---- Color picker buttons: small and clean ---- */
+#marknote-toolbar .marknote-color-btn {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+}
+
 /* ---- Note marker: small inline indicator next to highlighted area ---- */
 .marknote-note-marker {
   display: inline-flex !important;

@@ -20,6 +20,18 @@
   const NOTE_PANEL_ID = 'marknote-note-panel';
   const RESTORE_STATUS_ID = 'marknote-restore-status';
   const HIGHLIGHT_COLOR = 'yellow';
+  const HIGHLIGHT_COLORS = [
+    { name: 'yellow', emoji: '🟡', label: 'Yellow' },
+    { name: 'green', emoji: '🟢', label: 'Green' },
+    { name: 'blue', emoji: '🔵', label: 'Blue' },
+    { name: 'pink', emoji: '🩷', label: 'Pink' },
+    { name: 'purple', emoji: '🟣', label: 'Purple' },
+  ];
+
+  function normalizeHighlightColor(color) {
+    const c = String(color || '').toLowerCase().trim();
+    return HIGHLIGHT_COLORS.some((entry) => entry.name === c) ? c : HIGHLIGHT_COLOR;
+  }
 
   const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'SELECT', 'OPTION']);
 
@@ -35,6 +47,7 @@
   let lastRect = null;
   let toolbarEl = null;
   let highlightBtn = null;
+  let colorBtns = [];
   let noteBtn = null;
   // Gated restoration state. Page load only preloads (read-only); DOM is
   // touched exclusively by restoreOnActivate().
@@ -237,34 +250,46 @@
     toolbarEl.setAttribute('data-marknote', 'toolbar');
     toolbarEl.style.display = 'none';
 
-    highlightBtn = document.createElement('button');
-    highlightBtn.id = HIGHLIGHT_BTN_ID;
-    highlightBtn.type = 'button';
-    highlightBtn.setAttribute('data-marknote', 'highlight-btn');
-    highlightBtn.title = 'Highlight selection';
-    highlightBtn.textContent = '\uD83D\uDFE1 Highlight'; // 🟡 Highlight
+    highlightBtn = null;
+    colorBtns = [];
+    for (const entry of HIGHLIGHT_COLORS) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'marknote-color-btn';
+      btn.setAttribute('data-marknote', 'highlight-btn');
+      btn.dataset.highlightColor = entry.name;
+      btn.title = `Highlight in ${entry.label}`;
+      btn.setAttribute('aria-label', `Highlight in ${entry.label}`);
+      btn.textContent = entry.emoji;
+      if (entry.name === HIGHLIGHT_COLOR) {
+        btn.id = HIGHLIGHT_BTN_ID;
+        highlightBtn = btn;
+      }
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyHighlightFromStoredRange(entry.name).catch((err) => console.warn('[MarkNote] Highlight failed:', err));
+      });
+      colorBtns.push(btn);
+    }
 
     noteBtn = document.createElement('button');
     noteBtn.id = NOTE_BTN_ID;
     noteBtn.type = 'button';
     noteBtn.setAttribute('data-marknote', 'note-btn');
     noteBtn.title = 'Add note';
-    noteBtn.textContent = '\uD83D\uDCDD Note'; // 📝 Note
+    noteBtn.textContent = '📝 Note'; // 📝 Note
 
     toolbarEl.addEventListener('mousedown', (e) => e.preventDefault());
     toolbarEl.addEventListener('mouseup', (e) => e.stopPropagation());
-
-    highlightBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      applyHighlightFromStoredRange().catch((err) => console.warn('[MarkNote] Highlight failed:', err));
-    });
 
     noteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       openNoteEditor();
     });
 
-    toolbarEl.appendChild(highlightBtn);
+    for (const btn of colorBtns) {
+      toolbarEl.appendChild(btn);
+    }
     toolbarEl.appendChild(noteBtn);
 
     (document.body || document.documentElement).appendChild(toolbarEl);
@@ -421,7 +446,18 @@
 
   // ---------- Highlighting (same DOM behavior + persistent save) ----------
 
-  async function applyHighlightFromStoredRange() {
+  function applyColorToMarks(marks, color) {
+    const normalized = normalizeHighlightColor(color);
+    for (const mark of marks) {
+      if (mark) {
+        mark.dataset.highlightColor = normalized;
+      }
+    }
+    return normalized;
+  }
+
+  async function applyHighlightFromStoredRange(color) {
+    const highlightColor = normalizeHighlightColor(color);
     if (!lastRange) {
       hideToolbar();
       return;
@@ -473,7 +509,7 @@
             selectedText: rawSelected.trim(),
             surroundingText: surrounding,
             note: '',
-            highlightColor: HIGHLIGHT_COLOR,
+            highlightColor,
             type: 'highlight',
           });
           annotationId = saved.id;
@@ -485,7 +521,7 @@
       let wrapped = 0;
       const createdMarks = [];
       for (const node of textNodes) {
-        const mark = wrapTextNodeInRange(node, range);
+        const mark = wrapTextNodeInRange(node, range, undefined, highlightColor);
         if (mark) {
           wrapped += 1;
           createdMarks.push(mark);
@@ -568,7 +604,7 @@
   }
 
   // Returns the created <mark> element on success, null otherwise.
-  function wrapTextNodeInRange(textNode, range, noteId) {
+  function wrapTextNodeInRange(textNode, range, noteId, color) {
     if (textNode.parentElement && textNode.parentElement.closest(`.${HIGHLIGHT_CLASS}`)) {
       return null;
     }
@@ -610,6 +646,7 @@
     const mark = document.createElement('mark');
     mark.className = HIGHLIGHT_CLASS;
     mark.setAttribute('data-marknote', 'highlight');
+    mark.dataset.highlightColor = normalizeHighlightColor(color);
     if (noteId) {
       mark.dataset.noteId = noteId;
     }
@@ -1284,11 +1321,11 @@
     return out;
   }
 
-  function wrapRangeWithId(range, annotationId, isNote) {
+  function wrapRangeWithId(range, annotationId, isNote, color) {
     const nodes = getHighlightableTextNodes(range);
     const created = [];
     for (const node of nodes) {
-      const mark = wrapTextNodeInRange(node, range, isNote ? annotationId : undefined);
+      const mark = wrapTextNodeInRange(node, range, isNote ? annotationId : undefined, color);
       if (mark) {
         mark.dataset.annotationId = annotationId;
         created.push(mark);
@@ -1358,7 +1395,7 @@
     if (!best || best.score < SURROUNDING_MIN_SCORE) {
       return false;
     }
-    const marks = wrapRangeWithId(best.range, annotation.id, (annotation.type === 'note') || !!annotation.note);
+    const marks = wrapRangeWithId(best.range, annotation.id, (annotation.type === 'note') || !!annotation.note, normalizeHighlightColor(annotation.highlightColor));
     if (marks.length === 0) {
       return false;
     }
@@ -1387,6 +1424,7 @@
     }
     const isNote = (annotation.type === 'note') || !!annotation.note;
     const needle = annotation.selectedText.trim();
+    const highlightColor = normalizeHighlightColor(annotation.highlightColor);
 
     // Strategy 1: ranked single-node candidates (exact + fuzzy offsets).
     try {
@@ -1406,7 +1444,7 @@
         const range = document.createRange();
         range.setStart(c.node, offsets.start);
         range.setEnd(c.node, offsets.end);
-        const marks = wrapRangeWithId(range, annotation.id, isNote);
+        const marks = wrapRangeWithId(range, annotation.id, isNote, highlightColor);
         if (marks.length > 0) {
           afterRestoreRender(annotation, marks);
           return 'restored';
@@ -1422,7 +1460,7 @@
             const range = document.createRange();
             range.setStart(c.node, offsets.start);
             range.setEnd(c.node, offsets.end);
-            const marks = wrapRangeWithId(range, annotation.id, isNote);
+            const marks = wrapRangeWithId(range, annotation.id, isNote, highlightColor);
             if (marks.length > 0) {
               afterRestoreRender(annotation, marks);
               return 'restored';
@@ -1448,6 +1486,7 @@
   }
 
   function afterRestoreRender(annotation, marks) {
+    applyColorToMarks(marks, annotation && annotation.highlightColor);
     if ((annotation.type === 'note') || annotation.note) {
       notes.set(annotation.id, {
         id: annotation.id,

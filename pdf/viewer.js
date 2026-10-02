@@ -9,6 +9,13 @@
   const SCALE = 1.4;
   const HIGHLIGHT_CLASS = 'marknote-highlight';
   const MARKER_CLASS = 'marknote-note-marker';
+  const HIGHLIGHT_COLOR = 'yellow';
+  const HIGHLIGHT_COLORS = ['yellow', 'green', 'blue', 'pink', 'purple'];
+
+  function normalizeHighlightColor(color) {
+    const c = String(color || '').toLowerCase().trim();
+    return HIGHLIGHT_COLORS.indexOf(c) !== -1 ? c : HIGHLIGHT_COLOR;
+  }
 
   const params = new URLSearchParams(location.search);
   const pdfUrl = params.get('file') || '';
@@ -22,6 +29,7 @@
   const statusEl = document.getElementById('viewerStatus');
   const pagesEl = document.getElementById('pages');
   const toolbarEl = document.getElementById('marknote-pdf-toolbar');
+  const colorBtns = Array.from(toolbarEl ? toolbarEl.querySelectorAll('.pdf-color-btn') : []);
   const highlightBtn = document.getElementById('pdf-highlight-btn');
   const noteBtn = document.getElementById('pdf-note-btn');
   const panelEl = document.getElementById('marknote-pdf-panel');
@@ -210,9 +218,12 @@
     });
 
     toolbarEl.addEventListener('mousedown', (e) => e.preventDefault());
-    highlightBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      applyHighlight().catch((err) => console.warn('[MarkNote] PDF highlight failed:', err));
+    const highlightButtons = colorBtns.length > 0 ? colorBtns : (highlightBtn ? [highlightBtn] : []);
+    highlightButtons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyHighlight(btn.dataset ? btn.dataset.color : undefined).catch((err) => console.warn('[MarkNote] PDF highlight failed:', err));
+      });
     });
     noteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -394,6 +405,7 @@
     const mark = document.createElement('mark');
     mark.className = HIGHLIGHT_CLASS;
     mark.setAttribute('data-marknote', 'highlight');
+    mark.dataset.highlightColor = normalizeHighlightColor(attrs && attrs.color);
     if (attrs) {
       if (attrs.noteId) {
         mark.dataset.noteId = attrs.noteId;
@@ -447,7 +459,7 @@
     }
   }
 
-  async function persistSelection(range, noteText, kind) {
+  async function persistSelection(range, noteText, kind, color) {
     const store = globalThis.MarkNoteStorage;
     const raw = range.toString();
     const pageNumber = pageNumberOf(range);
@@ -465,6 +477,7 @@
       selectedText: raw.trim(),
       surroundingText: surroundingOf(range, raw),
       note: noteText || '',
+      highlightColor: normalizeHighlightColor(color),
     });
     // buildPdfAnnotation derives the same stable docId; assert agreement.
     if (built.docId !== docId) {
@@ -473,18 +486,19 @@
     return store.saveAnnotation(built);
   }
 
-  async function applyHighlight() {
+  async function applyHighlight(color) {
     if (!lastRange) {
       hideToolbar();
       return;
     }
     const range = lastRange;
+    const highlightColor = normalizeHighlightColor(color);
     try {
       if (!range.commonAncestorContainer.isConnected) {
         return;
       }
-      const saved = await persistSelection(range, '', 'highlight');
-      const marks = wrapRangeNodes(range, { annotationId: saved.id });
+      const saved = await persistSelection(range, '', 'highlight', highlightColor);
+      const marks = wrapRangeNodes(range, { annotationId: saved.id, color: highlightColor });
       console.log(`[MarkNote] PDF highlighted ${marks.length} node(s) on page ${saved.pageNumber}.`);
     } finally {
       hideToolbar();
@@ -800,10 +814,12 @@
       return false;
     }
     const marks = [];
+    const highlightColor = normalizeHighlightColor(a.highlightColor);
     for (const s of slices) {
       const mark = wrapSlice(s.node, s.start, s.end, {
         noteId: isNote ? a.id : undefined,
         annotationId: a.id,
+        color: highlightColor,
       });
       if (mark) {
         marks.push(mark);

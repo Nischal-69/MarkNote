@@ -210,6 +210,27 @@ mark.marknote-highlight {
   -webkit-box-decoration-break: clone !important;
 }
 
+/* ---- Highlight colors (base rule above stays yellow default) ---- */
+mark.marknote-highlight[data-highlight-color="yellow"] {
+  background-color: rgba(255, 235, 59, 0.45) !important;
+}
+
+mark.marknote-highlight[data-highlight-color="green"] {
+  background-color: rgba(187, 247, 208, 0.65) !important;
+}
+
+mark.marknote-highlight[data-highlight-color="blue"] {
+  background-color: rgba(191, 219, 254, 0.65) !important;
+}
+
+mark.marknote-highlight[data-highlight-color="pink"] {
+  background-color: rgba(254, 205, 211, 0.65) !important;
+}
+
+mark.marknote-highlight[data-highlight-color="purple"] {
+  background-color: rgba(221, 214, 254, 0.7) !important;
+}
+
 .marknote-note-marker {
   display: inline-flex;
   align-items: center;
@@ -252,6 +273,18 @@ mark.marknote-highlight {
   padding: 6px 10px;
   cursor: pointer;
   white-space: nowrap;
+}
+
+#marknote-pdf-toolbar .pdf-color-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
 #pdf-highlight-btn {
