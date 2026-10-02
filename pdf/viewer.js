@@ -436,7 +436,7 @@
     removeBtn.setAttribute('data-marknote', 'recolor-btn');
     removeBtn.title = 'Remove highlight';
     removeBtn.setAttribute('aria-label', 'Remove highlight');
-    removeBtn.textContent = '🗑️';
+    removeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#b91c1c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
     removeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       removeRecolored().catch((err) => console.warn('[MarkNote] PDF remove failed:', err));

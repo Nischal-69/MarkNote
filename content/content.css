@@ -183,6 +183,13 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   background: #fef2f2 !important;
 }
 
+#marknote-recolor-panel .marknote-remove-btn svg {
+  width: 13px !important;
+  height: 13px !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
 /* ---- Recolor picker: small popup on existing-highlight click ---- */
 #marknote-recolor-panel {
   position: fixed !important;

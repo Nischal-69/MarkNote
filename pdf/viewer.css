@@ -350,6 +350,13 @@ body {
   background: #fef2f2;
 }
 
+#marknote-pdf-recolor-panel .pdf-remove-btn svg {
+  width: 13px;
+  height: 13px;
+  display: block;
+  pointer-events: none;
+}
+
 #marknote-pdf-panel {
   position: fixed;
   z-index: 400;
