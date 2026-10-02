@@ -197,9 +197,17 @@ body {
 /* ---- MarkNote overlay UI (same visual language as web) ---- */
 
 mark.marknote-highlight {
-  background-color: #ffeb3b !important;
-  color: inherit !important;
+  /* Fix: textlayer spans are transparent by design (canvas below paints
+     the glyphs). The old rule inherited that transparency and used an
+     opaque yellow background, which covered the canvas and left a blank
+     yellow box. Translucent bg lets canvas show through; opaque dark
+     text keeps the layer's own glyphs readable on top of the bg. */
+  background-color: rgba(255, 235, 59, 0.45) !important;
+  color: #111827 !important;
   border-radius: 2px !important;
+  display: inline !important;
+  box-decoration-break: clone !important;
+  -webkit-box-decoration-break: clone !important;
 }
 
 .marknote-note-marker {
