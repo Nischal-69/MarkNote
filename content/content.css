@@ -91,12 +91,7 @@
 }
 
 #marknote-btn-highlight {
-  background: #fef08a !important;
-  border-color: #facc15 !important;
-}
-
-#marknote-btn-highlight:hover {
-  background: #fde047 !important;
+  box-shadow: 0 0 0 2px #ffffff !important, 0 0 0 4px #eab308 !important;
 }
 
 /* ---- Highlights: obvious but layout-safe (stays inline) ---- */
@@ -131,18 +126,55 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   background-color: #ddd6fe !important;
 }
 
-/* ---- Color picker buttons: small and clean ---- */
+/* ---- Highlight color dots: flat swatches (no emoji) ---- */
 #marknote-toolbar .marknote-color-btn,
 #marknote-recolor-panel .marknote-color-btn {
-  width: 28px !important;
-  height: 28px !important;
+  width: 22px !important;
+  height: 22px !important;
   padding: 0 !important;
-  font-size: 14px !important;
+  font-size: 0 !important;
   line-height: 1 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   border-radius: 50% !important;
+  border: 2px solid !important;
+  cursor: pointer !important;
+}
+
+#marknote-toolbar .marknote-color-btn[data-highlight-color="yellow"],
+#marknote-recolor-panel .marknote-color-btn[data-highlight-color="yellow"] {
+  background: #ffeb3b !important;
+  border-color: #eab308 !important;
+}
+
+#marknote-toolbar .marknote-color-btn[data-highlight-color="green"],
+#marknote-recolor-panel .marknote-color-btn[data-highlight-color="green"] {
+  background: #bbf7d0 !important;
+  border-color: #4ade80 !important;
+}
+
+#marknote-toolbar .marknote-color-btn[data-highlight-color="blue"],
+#marknote-recolor-panel .marknote-color-btn[data-highlight-color="blue"] {
+  background: #bfdbfe !important;
+  border-color: #60a5fa !important;
+}
+
+#marknote-toolbar .marknote-color-btn[data-highlight-color="pink"],
+#marknote-recolor-panel .marknote-color-btn[data-highlight-color="pink"] {
+  background: #fecdd3 !important;
+  border-color: #f472b6 !important;
+}
+
+#marknote-toolbar .marknote-color-btn[data-highlight-color="purple"],
+#marknote-recolor-panel .marknote-color-btn[data-highlight-color="purple"] {
+  background: #ddd6fe !important;
+  border-color: #a78bfa !important;
+}
+
+#marknote-toolbar .marknote-color-btn:hover,
+#marknote-recolor-panel .marknote-color-btn:hover {
+  transform: scale(1.12) !important;
 }
 
 /* ---- Remove button in the highlight options picker ---- */

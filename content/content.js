@@ -22,11 +22,11 @@
   const RECOLOR_PANEL_ID = 'marknote-recolor-panel';
   const HIGHLIGHT_COLOR = 'yellow';
   const HIGHLIGHT_COLORS = [
-    { name: 'yellow', emoji: '🟡', label: 'Yellow' },
-    { name: 'green', emoji: '🟢', label: 'Green' },
-    { name: 'blue', emoji: '🔵', label: 'Blue' },
-    { name: 'pink', emoji: '🩷', label: 'Pink' },
-    { name: 'purple', emoji: '🟣', label: 'Purple' },
+    { name: 'yellow', label: 'Yellow' },
+    { name: 'green', label: 'Green' },
+    { name: 'blue', label: 'Blue' },
+    { name: 'pink', label: 'Pink' },
+    { name: 'purple', label: 'Purple' },
   ];
 
   function normalizeHighlightColor(color) {
@@ -266,7 +266,7 @@
       btn.dataset.highlightColor = entry.name;
       btn.title = `Highlight in ${entry.label}`;
       btn.setAttribute('aria-label', `Highlight in ${entry.label}`);
-      btn.textContent = entry.emoji;
+      btn.textContent = '';
       if (entry.name === HIGHLIGHT_COLOR) {
         btn.id = HIGHLIGHT_BTN_ID;
         highlightBtn = btn;
@@ -360,7 +360,7 @@
       btn.dataset.highlightColor = entry.name;
       btn.title = `Change to ${entry.label}`;
       btn.setAttribute('aria-label', `Change highlight to ${entry.label}`);
-      btn.textContent = entry.emoji;
+      btn.textContent = '';
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         applyRecolor(entry.name).catch((err) => console.warn('[MarkNote] Recolor failed:', err));

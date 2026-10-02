@@ -401,11 +401,11 @@
       return recolorEl;
     }
     const COLORS = [
-      { name: 'yellow', emoji: '🟡', label: 'Yellow' },
-      { name: 'green', emoji: '🟢', label: 'Green' },
-      { name: 'blue', emoji: '🔵', label: 'Blue' },
-      { name: 'pink', emoji: '🩷', label: 'Pink' },
-      { name: 'purple', emoji: '🟣', label: 'Purple' },
+      { name: 'yellow', label: 'Yellow' },
+      { name: 'green', label: 'Green' },
+      { name: 'blue', label: 'Blue' },
+      { name: 'pink', label: 'Pink' },
+      { name: 'purple', label: 'Purple' },
     ];
     recolorEl = document.createElement('div');
     recolorEl.id = RECOLOR_PANEL_ID;
@@ -423,7 +423,7 @@
       btn.dataset.color = entry.name;
       btn.title = `Change to ${entry.label}`;
       btn.setAttribute('aria-label', `Change highlight to ${entry.label}`);
-      btn.textContent = entry.emoji;
+      btn.textContent = '';
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         applyRecolor(entry.name).catch((err) => console.warn('[MarkNote] PDF recolor failed:', err));
