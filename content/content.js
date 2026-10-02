@@ -347,7 +347,7 @@
     recolorEl.id = RECOLOR_PANEL_ID;
     recolorEl.setAttribute('data-marknote', 'recolor-panel');
     recolorEl.setAttribute('role', 'toolbar');
-    recolorEl.setAttribute('aria-label', 'Change highlight color');
+    recolorEl.setAttribute('aria-label', 'Highlight options');
     recolorEl.style.display = 'none';
     recolorEl.addEventListener('mousedown', (e) => e.preventDefault());
     recolorEl.addEventListener('mouseup', (e) => e.stopPropagation());
@@ -367,6 +367,19 @@
       });
       recolorEl.appendChild(btn);
     }
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'marknote-color-btn marknote-remove-btn';
+    removeBtn.setAttribute('data-marknote', 'recolor-btn');
+    removeBtn.title = 'Remove highlight';
+    removeBtn.setAttribute('aria-label', 'Remove highlight');
+    removeBtn.textContent = '🗑️';
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeRecolored().catch((err) => console.warn('[MarkNote] Remove failed:', err));
+    });
+    recolorEl.appendChild(removeBtn);
 
     (document.body || document.documentElement).appendChild(recolorEl);
     return recolorEl;
@@ -467,6 +480,64 @@
       console.log(`[MarkNote] Highlight recolored to ${highlightColor}.`);
     } catch (err) {
       console.warn('[MarkNote] Recolor save failed, keeping visual change only:', err);
+    }
+    clearSelection();
+  }
+
+  function unwrapMarks(marks) {
+    for (const mark of marks || []) {
+      const parent = mark && mark.parentNode;
+      if (!parent) {
+        continue;
+      }
+      while (mark.firstChild) {
+        parent.insertBefore(mark.firstChild, mark);
+      }
+      parent.removeChild(mark);
+      if (parent.normalize) {
+        try {
+          parent.normalize();
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+  }
+
+  async function removeRecolored() {
+    const marks = recolorMarks.slice();
+    const annotationId = recolorAnnotationId;
+    hideRecolorPanel();
+    if (marks.length === 0 && !annotationId) {
+      return;
+    }
+    const isNote = !!annotationId
+      && (notes.has(annotationId) || marks.some((m) => m && m.dataset && m.dataset.noteId));
+    if (isNote) {
+      if (!window.confirm('Delete this note? The highlight will be removed too.')) {
+        return;
+      }
+      // Existing path: confirm, marker + marks + storage, note included.
+      await deleteNote(annotationId);
+      unwrapMarks(marks);
+      clearSelection();
+      return;
+    }
+    unwrapMarks(marks);
+    if (!annotationId) {
+      clearSelection();
+      return; // visual-only; nothing was ever persisted.
+    }
+    const s = store();
+    if (!s) {
+      clearSelection();
+      return;
+    }
+    try {
+      await s.deleteAnnotation(annotationId);
+      console.log('[MarkNote] Highlight removed.');
+    } catch (err) {
+      console.warn('[MarkNote] Remove failed in storage, removed from DOM only:', err);
     }
     clearSelection();
   }

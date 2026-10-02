@@ -310,6 +310,12 @@ body {
   border-radius: 50%;
 }
 
+/* ---- Remove button in the highlight options picker ---- */
+#marknote-pdf-recolor-panel .pdf-remove-btn {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
 #pdf-highlight-btn {
   background: #fef08a !important;
   border-color: #facc15 !important;

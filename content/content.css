@@ -132,7 +132,8 @@ mark.marknote-highlight[data-highlight-color="purple"] {
 }
 
 /* ---- Color picker buttons: small and clean ---- */
-#marknote-toolbar .marknote-color-btn {
+#marknote-toolbar .marknote-color-btn,
+#marknote-recolor-panel .marknote-color-btn {
   width: 28px !important;
   height: 28px !important;
   padding: 0 !important;
@@ -142,6 +143,12 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   align-items: center !important;
   justify-content: center !important;
   border-radius: 50% !important;
+}
+
+/* ---- Remove button in the highlight options picker ---- */
+#marknote-recolor-panel .marknote-remove-btn {
+  border-color: #fecaca !important;
+  background: #fef2f2 !important;
 }
 
 /* ---- Recolor picker: small popup on existing-highlight click ---- */

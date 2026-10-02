@@ -411,7 +411,7 @@
     recolorEl.id = RECOLOR_PANEL_ID;
     recolorEl.setAttribute('data-marknote', 'recolor-panel');
     recolorEl.setAttribute('role', 'toolbar');
-    recolorEl.setAttribute('aria-label', 'Change highlight color');
+    recolorEl.setAttribute('aria-label', 'Highlight options');
     recolorEl.style.display = 'none';
     recolorEl.addEventListener('mousedown', (e) => e.preventDefault());
     recolorEl.addEventListener('mouseup', (e) => e.stopPropagation());
@@ -430,6 +430,18 @@
       });
       recolorEl.appendChild(btn);
     }
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'pdf-color-btn pdf-remove-btn';
+    removeBtn.setAttribute('data-marknote', 'recolor-btn');
+    removeBtn.title = 'Remove highlight';
+    removeBtn.setAttribute('aria-label', 'Remove highlight');
+    removeBtn.textContent = '🗑️';
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeRecolored().catch((err) => console.warn('[MarkNote] PDF remove failed:', err));
+    });
+    recolorEl.appendChild(removeBtn);
     document.body.appendChild(recolorEl);
     return recolorEl;
   }
@@ -549,6 +561,52 @@
       console.log(`[MarkNote] PDF highlight recolored to ${highlightColor}.`);
     } catch (err) {
       console.warn('[MarkNote] PDF recolor save failed, keeping visual change only:', err);
+    }
+    clearSelection();
+  }
+
+  async function removeRecolored() {
+    const boxes = recolorMarks.slice();
+    const annotationId = recolorAnnotationId;
+    hideRecolorPanel();
+    if (boxes.length === 0 && !annotationId) {
+      return;
+    }
+    const isNote = !!annotationId
+      && (notes.has(annotationId) || boxes.some((b) => b && b.dataset && b.dataset.noteId));
+    if (isNote) {
+      if (!window.confirm('Delete this note? The highlight will be removed too.')) {
+        return;
+      }
+      // Existing path: storage + marker + boxes, note included.
+      await deleteNote(annotationId);
+      for (const box of boxes) {
+        if (box && box.isConnected) {
+          box.remove();
+        }
+      }
+      clearSelection();
+      return;
+    }
+    for (const box of boxes) {
+      if (box && box.isConnected) {
+        box.remove();
+      }
+    }
+    if (!annotationId) {
+      clearSelection();
+      return; // visual-only; nothing was ever persisted.
+    }
+    const store = globalThis.MarkNoteStorage;
+    if (!store) {
+      clearSelection();
+      return;
+    }
+    try {
+      await store.deleteAnnotation(annotationId);
+      console.log('[MarkNote] PDF highlight removed.');
+    } catch (err) {
+      console.warn('[MarkNote] PDF remove failed in storage, removed from page only:', err);
     }
     clearSelection();
   }
