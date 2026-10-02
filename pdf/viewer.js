@@ -8,6 +8,7 @@
 
   const SCALE = 1.4;
   const HIGHLIGHT_CLASS = 'marknote-highlight';
+  const HIGHLIGHT_DIV_CLASS = 'marknote-pdf-highlight';
   const MARKER_CLASS = 'marknote-note-marker';
   const HIGHLIGHT_COLOR = 'yellow';
   const HIGHLIGHT_COLORS = ['yellow', 'green', 'blue', 'pink', 'purple'];
@@ -181,32 +182,70 @@
 
       const layer = document.createElement('div');
       layer.className = 'pdf-textlayer';
-      const textContent = await page.getTextContent();
-      const Util = globalThis.pdfjsLib.Util;
-      for (const item of textContent.items) {
-        if (!item.str) {
-          continue;
-        }
-        const tx = Util.transform(viewport.transform, item.transform);
-        const fontHeight = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
-        if (!Number.isFinite(fontHeight) || fontHeight <= 0) {
-          continue;
-        }
-        const span = document.createElement('span');
-        span.textContent = item.str + (item.hasEOL ? ' ' : '');
-        span.style.left = `${tx[4]}px`;
-        span.style.top = `${tx[5] - fontHeight}px`;
-        span.style.fontSize = `${fontHeight}px`;
-        const scaleX = tx[0] / fontHeight;
-        if (Number.isFinite(scaleX) && scaleX > 0.3 && scaleX < 5) {
-          span.style.transform = `scaleX(${scaleX})`;
-        }
-        layer.appendChild(span);
-      }
+      // Upstream spans size themselves with calc(var(--scale-factor)*…px),
+      // so the var must exist on an ancestor (the viewer app normally sets it).
+      layer.style.setProperty('--scale-factor', String(SCALE));
       shell.appendChild(layer);
+      if (!(await renderUpstreamTextLayer(page, viewport, layer))) {
+        await renderFallbackTextLayer(page, viewport, layer);
+      }
     } catch (err) {
       rendered.delete(n);
       throw err;
+    }
+  }
+
+  // Upstream text layer (same code family as Chrome's built-in viewer): each
+  // span is width-calibrated to its laid-out glyphs, so the invisible
+  // selectable words sit exactly on the visible canvas words. Returns true
+  // when the layer rendered and is ready to select from.
+  async function renderUpstreamTextLayer(page, viewport, layer) {
+    try {
+      const api = globalThis.pdfjsLib && globalThis.pdfjsLib.renderTextLayer;
+      if (typeof api !== 'function' || typeof page.streamTextContent !== 'function') {
+        return false;
+      }
+      const task = api.call(globalThis.pdfjsLib, {
+        container: layer,
+        viewport,
+        textContentSource: page.streamTextContent(),
+      });
+      if (!task || !task.promise || typeof task.promise.then !== 'function') {
+        return false;
+      }
+      await task.promise;
+      return true;
+    } catch (err) {
+      console.warn('[MarkNote] Upstream text layer failed, using fallback:', err);
+      layer.innerHTML = '';
+      return false;
+    }
+  }
+
+  // Legacy fallback: uncalibrated spans. Selection still works, just less
+  // precise than the upstream layer above.
+  async function renderFallbackTextLayer(page, viewport, layer) {
+    const textContent = await page.getTextContent();
+    const Util = globalThis.pdfjsLib.Util;
+    for (const item of textContent.items) {
+      if (!item.str) {
+        continue;
+      }
+      const tx = Util.transform(viewport.transform, item.transform);
+      const fontHeight = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
+      if (!Number.isFinite(fontHeight) || fontHeight <= 0) {
+        continue;
+      }
+      const span = document.createElement('span');
+      span.textContent = item.str + (item.hasEOL ? ' ' : '');
+      span.style.left = `${tx[4]}px`;
+      span.style.top = `${tx[5] - fontHeight}px`;
+      span.style.fontSize = `${fontHeight}px`;
+      const scaleX = tx[0] / fontHeight;
+      if (Number.isFinite(scaleX) && scaleX > 0.3 && scaleX < 5) {
+        span.style.transform = `scaleX(${scaleX})`;
+      }
+      layer.appendChild(span);
     }
   }
 
@@ -395,6 +434,24 @@
     return recolorEl;
   }
 
+  // Boxes are pointer-transparent (text stays selectable), so locate the
+  // highlight under the click by geometry instead of event targeting.
+  function highlightAtPoint(x, y) {
+    const boxes = pagesEl.querySelectorAll(`.${HIGHLIGHT_DIV_CLASS}`);
+    for (const box of boxes) {
+      let r = null;
+      try {
+        r = box.getBoundingClientRect();
+      } catch (e) {
+        continue;
+      }
+      if (r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+        return box;
+      }
+    }
+    return null;
+  }
+
   function onHighlightClick(e) {
     if (!e || !e.target || !e.target.closest) {
       return;
@@ -402,8 +459,10 @@
     if (e.target.closest(`#${RECOLOR_PANEL_ID}`)) {
       return; // picker button handlers do the work.
     }
-    const mark = e.target.closest(`mark.${HIGHLIGHT_CLASS}`);
-    if (!mark || !mark.closest('#pages')) {
+    const x = typeof e.clientX === 'number' ? e.clientX : window.innerWidth / 2;
+    const y = typeof e.clientY === 'number' ? e.clientY : 100;
+    const hit = highlightAtPoint(x, y);
+    if (!hit || !hit.closest('#pages')) {
       hideRecolorPanel();
       return;
     }
@@ -421,23 +480,21 @@
     } catch (err) {
       // ignore
     }
-    const annotationId = mark.dataset && mark.dataset.annotationId ? mark.dataset.annotationId : null;
-    let marks;
+    const annotationId = hit.dataset && hit.dataset.annotationId ? hit.dataset.annotationId : null;
+    let boxes;
     if (annotationId) {
       try {
-        marks = Array.from(pagesEl.querySelectorAll(`mark.${HIGHLIGHT_CLASS}[data-annotation-id="${CSS.escape(annotationId)}"]`));
+        boxes = Array.from(pagesEl.querySelectorAll(`.${HIGHLIGHT_DIV_CLASS}[data-annotation-id="${CSS.escape(annotationId)}"]`));
       } catch (err) {
-        marks = [mark];
+        boxes = [hit];
       }
-      if (marks.length === 0) {
-        marks = [mark];
+      if (boxes.length === 0) {
+        boxes = [hit];
       }
     } else {
-      marks = [mark]; // DOM-only highlight (earlier save failed): recolor visually.
+      boxes = [hit]; // DOM-only highlight (earlier save failed): recolor visually.
     }
-    const x = typeof e.clientX === 'number' ? e.clientX : window.innerWidth / 2;
-    const y = typeof e.clientY === 'number' ? e.clientY : 100;
-    showRecolorPanel(annotationId, marks, x, y);
+    showRecolorPanel(annotationId, boxes, x, y);
   }
 
   function showRecolorPanel(annotationId, marks, x, y) {
@@ -468,15 +525,15 @@
 
   async function applyRecolor(color) {
     const highlightColor = normalizeHighlightColor(color);
-    const marks = recolorMarks.slice();
+    const boxes = recolorMarks.slice();
     const annotationId = recolorAnnotationId;
     hideRecolorPanel();
-    if (marks.length === 0) {
+    if (boxes.length === 0) {
       return;
     }
-    for (const mark of marks) {
-      if (mark) {
-        mark.dataset.highlightColor = highlightColor;
+    for (const box of boxes) {
+      if (box) {
+        box.dataset.highlightColor = highlightColor;
       }
     }
     if (!annotationId) {
@@ -506,95 +563,129 @@
     return page ? Number(page.dataset.pageNumber) : null;
   }
 
-  function textNodesInRange(range) {
-    const root = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
-      ? range.commonAncestorContainer
-      : range.commonAncestorContainer.parentElement;
-    const nodes = [];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        try {
-          if (!range.intersectsNode(node)) {
-            return NodeFilter.FILTER_SKIP;
-          }
-        } catch (e) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        return isWrappable(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
-      },
+  // Highlights are translucent boxes drawn from the selection's own line
+  // rects, layered between canvas and text (see viewer.css). The text layer
+  // is never split, wrapped, or restyled, so glyphs can't shift or vanish.
+
+  function shellRects() {
+    const map = new Map();
+    pagesEl.querySelectorAll('.pdf-page').forEach((shell) => {
+      map.set(shell, shell.getBoundingClientRect());
     });
-    let cur;
-    while ((cur = walker.nextNode())) {
-      nodes.push(cur);
-    }
-    return nodes;
+    return map;
   }
 
-  function isWrappable(node) {
-    if (!node || !node.nodeValue || !node.nodeValue.trim()) {
-      return false;
-    }
-    const parent = node.parentElement;
-    if (!parent || !parent.closest('.pdf-textlayer')) {
-      return false;
-    }
-    if (parent.closest(`.${HIGHLIGHT_CLASS}, [data-marknote]`)) {
-      return false;
-    }
-    return true;
-  }
-
-  function wrapSlice(node, start, end, attrs) {
-    if (start >= end) {
-      return null;
-    }
-    const slice = node.nodeValue.slice(start, end);
-    if (!slice || !slice.trim()) {
-      return null;
-    }
-    let target = node;
-    if (start > 0) {
-      target = target.splitText(start);
-      end -= start;
-    }
-    if (end < target.length) {
-      target.splitText(end);
-    }
-    const mark = document.createElement('mark');
-    mark.className = HIGHLIGHT_CLASS;
-    mark.setAttribute('data-marknote', 'highlight');
-    mark.dataset.highlightColor = normalizeHighlightColor(attrs && attrs.color);
-    if (attrs) {
-      if (attrs.noteId) {
-        mark.dataset.noteId = attrs.noteId;
-      }
-      if (attrs.annotationId) {
-        mark.dataset.annotationId = attrs.annotationId;
+  function ownerShell(rect, shells) {
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    for (const [shell, sr] of shells) {
+      if (cx >= sr.left && cx <= sr.right && cy >= sr.top && cy <= sr.bottom) {
+        return shell;
       }
     }
-    target.parentNode.insertBefore(mark, target);
-    mark.appendChild(target);
-    return mark;
+    return null;
   }
 
-  function wrapRangeNodes(range, attrs) {
-    const nodes = textNodesInRange(range);
+  function toShellRects(shell, sr, clientRects) {
+    const out = [];
+    for (const cr of clientRects) {
+      if (!(cr.width > 0 && cr.height > 0)) {
+        continue;
+      }
+      out.push({
+        shell,
+        left: cr.left - sr.left,
+        top: cr.top - sr.top,
+        width: cr.width,
+        height: cr.height,
+      });
+    }
+    return out;
+  }
+
+  // One smooth box per selected line, assigned to its owning page.
+  function rectsFromRange(range) {
+    const out = [];
+    let shells = null;
+    let list = [];
+    try {
+      list = Array.from(range.getClientRects());
+    } catch (e) {
+      return out;
+    }
+    for (const cr of list) {
+      if (!(cr.width > 0 && cr.height > 0)) {
+        continue;
+      }
+      if (!shells) {
+        shells = shellRects();
+      }
+      const shell = ownerShell(cr, shells);
+      if (!shell) {
+        continue;
+      }
+      const sr = shells.get(shell);
+      out.push({
+        shell,
+        left: cr.left - sr.left,
+        top: cr.top - sr.top,
+        width: cr.width,
+        height: cr.height,
+      });
+    }
+    return out;
+  }
+
+  // Same, but for restored annotations located as text slices on one page.
+  function rectsFromSlices(shell, slices) {
+    if (!slices || slices.length === 0) {
+      return [];
+    }
+    let range = null;
+    try {
+      range = document.createRange();
+      range.setStart(slices[0].node, slices[0].start);
+      const last = slices[slices.length - 1];
+      range.setEnd(last.node, last.end);
+      const sr = shell.getBoundingClientRect();
+      return toShellRects(shell, sr, Array.from(range.getClientRects()));
+    } catch (e) {
+      return [];
+    } finally {
+      try {
+        if (range && typeof range.detach === 'function') {
+          range.detach();
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
+  function renderRects(rects, attrs) {
     const created = [];
-    for (const node of nodes) {
-      let start = 0;
-      let end = node.length;
-      if (node === range.startContainer && node === range.endContainer) {
-        start = range.startOffset;
-        end = range.endOffset;
-      } else if (node === range.startContainer) {
-        start = range.startOffset;
-      } else if (node === range.endContainer) {
-        end = range.endOffset;
+    for (const r of rects) {
+      if (!r || !r.shell || !(r.width > 0) || !(r.height > 0)) {
+        continue;
       }
-      const mark = wrapSlice(node, start, end, attrs);
-      if (mark) {
-        created.push(mark);
+      const box = document.createElement('div');
+      box.className = HIGHLIGHT_DIV_CLASS;
+      box.setAttribute('data-marknote', 'highlight');
+      box.dataset.highlightColor = normalizeHighlightColor(attrs && attrs.color);
+      if (attrs) {
+        if (attrs.noteId) {
+          box.dataset.noteId = attrs.noteId;
+        }
+        if (attrs.annotationId) {
+          box.dataset.annotationId = attrs.annotationId;
+        }
       }
+      box.style.left = `${r.left}px`;
+      box.style.top = `${r.top}px`;
+      box.style.width = `${r.width}px`;
+      box.style.height = `${r.height}px`;
+      r.shell.appendChild(box);
+      created.push(box);
     }
     return created;
   }
@@ -656,8 +747,8 @@
         return;
       }
       const saved = await persistSelection(range, '', 'highlight', highlightColor);
-      const marks = wrapRangeNodes(range, { annotationId: saved.id, color: highlightColor });
-      console.log(`[MarkNote] PDF highlighted ${marks.length} node(s) on page ${saved.pageNumber}.`);
+      const highlights = renderRects(rectsFromRange(range), { annotationId: saved.id, color: highlightColor });
+      console.log(`[MarkNote] PDF highlighted ${highlights.length} box(es) on page ${saved.pageNumber}.`);
     } finally {
       hideToolbar();
       lastRange = null;
@@ -706,8 +797,12 @@
     const range = lastRange;
     const preview = range.toString().replace(/\s+/g, ' ').trim().slice(0, 200);
     const saved = await persistSelection(range, noteText, 'note');
-    const marks = wrapRangeNodes(range, { noteId: saved.id, annotationId: saved.id });
-    anchorMarker(createMarker(saved.id), marks);
+    const rects = rectsFromRange(range);
+    const highlights = renderRects(rects, { noteId: saved.id, annotationId: saved.id });
+    if (rects.length > 0) {
+      const last = rects[rects.length - 1];
+      anchorMarker(createMarker(saved.id), last.shell, last.left + last.width + 4, last.top - 10);
+    }
     notes.set(saved.id, { id: saved.id, selectedText: preview, noteText, expiresAt: saved.expiresAt });
     hidePanel();
     hideToolbar();
@@ -853,16 +948,8 @@
     if (marker) {
       marker.remove();
     }
-    pagesEl.querySelectorAll(`mark.${HIGHLIGHT_CLASS}[data-note-id="${CSS.escape(noteId)}"]`).forEach((mark) => {
-      const parent = mark.parentNode;
-      if (!parent) {
-        return;
-      }
-      while (mark.firstChild) {
-        parent.insertBefore(mark.firstChild, mark);
-      }
-      mark.remove();
-      parent.normalize();
+    pagesEl.querySelectorAll(`.${HIGHLIGHT_DIV_CLASS}[data-note-id="${CSS.escape(noteId)}"]`).forEach((box) => {
+      box.remove();
     });
     notes.delete(noteId);
     hidePanel();
@@ -887,11 +974,16 @@
     return marker;
   }
 
-  function anchorMarker(marker, marks) {
-    if (marks.length > 0) {
-      const last = marks[marks.length - 1];
-      last.parentNode.insertBefore(marker, last.nextSibling);
+  // Marker floats in the page shell just past the highlight end —
+  // never inside the text flow, so it can't cover glyphs.
+  function anchorMarker(marker, shell, x, y) {
+    if (!shell) {
+      return;
     }
+    const maxLeft = Math.max(0, shell.clientWidth - 26);
+    marker.style.left = `${Math.max(0, Math.min(x, maxLeft))}px`;
+    marker.style.top = `${Math.max(0, y)}px`;
+    shell.appendChild(marker);
   }
 
   function markerRect(noteId) {
@@ -972,19 +1064,17 @@
       console.warn(`[MarkNote] PDF annotation unavailable (kept stored): ${a.id}`);
       return false;
     }
-    const marks = [];
     const highlightColor = normalizeHighlightColor(a.highlightColor);
-    for (const s of slices) {
-      const mark = wrapSlice(s.node, s.start, s.end, {
-        noteId: isNote ? a.id : undefined,
-        annotationId: a.id,
-        color: highlightColor,
-      });
-      if (mark) {
-        marks.push(mark);
-      }
+    const rects = rectsFromSlices(shell, slices);
+    if (rects.length === 0) {
+      return false;
     }
-    if (marks.length === 0) {
+    const highlights = renderRects(rects, {
+      noteId: isNote ? a.id : undefined,
+      annotationId: a.id,
+      color: highlightColor,
+    });
+    if (highlights.length === 0) {
       return false;
     }
     if (isNote) {
@@ -994,7 +1084,8 @@
         noteText: a.note || '',
         expiresAt: a.expiresAt,
       });
-      anchorMarker(createMarker(a.id), marks);
+      const last = rects[rects.length - 1];
+      anchorMarker(createMarker(a.id), shell, last.left + last.width + 4, last.top - 10);
     }
     return true;
   }

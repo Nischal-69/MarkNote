@@ -178,6 +178,7 @@ body {
   inset: 0;
   overflow: hidden;
   line-height: 1;
+  z-index: 2;
 }
 
 .pdf-textlayer span {
@@ -196,49 +197,44 @@ body {
 
 /* ---- MarkNote overlay UI (same visual language as web) ---- */
 
-mark.marknote-highlight {
-  /* Fix: textlayer spans are transparent by design (canvas below paints
-     the glyphs). The old rule inherited that transparency and used an
-     opaque yellow background, which covered the canvas and left a blank
-     yellow box. Translucent bg lets canvas show through; opaque dark
-     text keeps the layer's own glyphs readable on top of the bg. */
-  background-color: rgba(255, 235, 59, 0.45) !important;
-  color: #111827 !important;
-  border-radius: 2px !important;
-  display: inline !important;
-  box-decoration-break: clone !important;
-  -webkit-box-decoration-break: clone !important;
+/* Highlight boxes sit between canvas (z 0) and text (z 2): never cover
+   glyphs, never intercept clicks, so selection and scrolling are native. */
+.marknote-pdf-highlight {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 3px;
+  background-color: rgba(255, 235, 59, 0.45);
 }
 
-/* ---- Highlight colors (base rule above stays yellow default) ---- */
-mark.marknote-highlight[data-highlight-color="yellow"] {
-  background-color: rgba(255, 235, 59, 0.45) !important;
+.marknote-pdf-highlight[data-highlight-color="yellow"] {
+  background-color: rgba(255, 235, 59, 0.45);
 }
 
-mark.marknote-highlight[data-highlight-color="green"] {
-  background-color: rgba(187, 247, 208, 0.65) !important;
+.marknote-pdf-highlight[data-highlight-color="green"] {
+  background-color: rgba(187, 247, 208, 0.65);
 }
 
-mark.marknote-highlight[data-highlight-color="blue"] {
-  background-color: rgba(191, 219, 254, 0.65) !important;
+.marknote-pdf-highlight[data-highlight-color="blue"] {
+  background-color: rgba(191, 219, 254, 0.65);
 }
 
-mark.marknote-highlight[data-highlight-color="pink"] {
-  background-color: rgba(254, 205, 211, 0.65) !important;
+.marknote-pdf-highlight[data-highlight-color="pink"] {
+  background-color: rgba(254, 205, 211, 0.65);
 }
 
-mark.marknote-highlight[data-highlight-color="purple"] {
-  background-color: rgba(221, 214, 254, 0.7) !important;
+.marknote-pdf-highlight[data-highlight-color="purple"] {
+  background-color: rgba(221, 214, 254, 0.7);
 }
 
 .marknote-note-marker {
+  position: absolute;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  vertical-align: super;
   font-size: 11px;
   line-height: 1;
-  margin-left: 3px;
   padding: 1px 3px;
   background: #ffffff;
   border: 1px solid #facc15;
