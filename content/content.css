@@ -112,7 +112,7 @@
 }
 
 #marknote-btn-highlight {
-  box-shadow: 0 0 0 1px #ffffff !important, 0 0 0 2px #eab308 !important;
+  box-shadow: 0 0 0 2px #ffffff !important, 0 0 0 3px #eab308 !important;
 }
 
 /* ---- Highlights: obvious but layout-safe (stays inline) ---- */
@@ -198,15 +198,28 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   transform: scale(1.12) !important;
 }
 
-/* ---- Toolbar-only compact color dots (recolor panel keeps its own size) ---- */
+/* ---- Toolbar-only color selector: 20px circles, small gaps, subtle rings ----
+   (recolor panel keeps its own size; per-color fills stay shared above) */
 #marknote-toolbar .marknote-color-btn {
   width: 20px !important;
   height: 20px !important;
+  margin: 0 1px !important;
+  border-width: 1px !important;
 }
 
 #marknote-toolbar .marknote-color-btn:hover {
   transform: none !important;
-  box-shadow: 0 0 0 2px #ffffff !important, 0 0 0 3px #d1d5db !important;
+  box-shadow: 0 0 0 2px #ffffff !important, 0 0 0 3px #9ca3af !important;
+}
+
+#marknote-toolbar .marknote-color-btn:active {
+  transform: none !important;
+  box-shadow: 0 0 0 2px #ffffff !important, 0 0 0 3px #6b7280 !important;
+}
+
+#marknote-toolbar .marknote-color-btn:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #ffffff !important, 0 0 0 4px #111827 !important;
 }
 
 /* ---- Remove button in the highlight options picker ---- */
