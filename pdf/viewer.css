@@ -64,17 +64,14 @@ body.marknote-pdf-active .pdf-textlayer span {
 }
 
 .logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: #111827;
-  color: #facc15;
-  font-weight: 700;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-flex;
   flex-shrink: 0;
+}
+
+.logo svg {
+  display: block;
+  border-radius: 6px;
+  border: 1px solid #333;
 }
 
 .brand-text h1 {
@@ -441,11 +438,8 @@ body.marknote-pdf-active .pdf-textlayer span {
 }
 
 #marknote-pdf-panel .pp-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   margin-bottom: 6px;
+  padding-right: 28px;
 }
 
 #marknote-pdf-panel .pp-head .pp-title {
@@ -453,6 +447,9 @@ body.marknote-pdf-active .pdf-textlayer span {
 }
 
 #marknote-pdf-panel .pp-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
