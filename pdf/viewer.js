@@ -280,6 +280,10 @@
       }
       hideToolbar();
       hideRecolorPanel();
+      // Viewing is read-only, so dismissing is safe; create/edit keep drafts.
+      if (panelMode === 'view') {
+        hidePanel();
+      }
     });
     pagesEl.addEventListener('mouseup', (e) => {
       if (!isActive || isMarkNoteUi(e.target)) {
@@ -309,6 +313,7 @@
       return;
     }
     isActive = true;
+    document.body.classList.add('marknote-pdf-active');
     pill.classList.add('is-active');
     pillText.textContent = 'Active';
     activateBtn.textContent = 'Deactivate';
@@ -323,6 +328,7 @@
     hideRecolorPanel();
     hidePanel();
     clearSelection();
+    document.body.classList.remove('marknote-pdf-active');
     pill.classList.remove('is-active');
     pillText.textContent = 'Idle';
     activateBtn.textContent = 'Activate MarkNote';
@@ -441,9 +447,102 @@
       e.stopPropagation();
       removeRecolored().catch((err) => console.warn('[MarkNote] PDF remove failed:', err));
     });
+
+    const noteToolBtn = document.createElement('button');
+    noteToolBtn.type = 'button';
+    noteToolBtn.className = 'pdf-color-btn pdf-tool-btn';
+    noteToolBtn.setAttribute('data-marknote', 'recolor-btn');
+    noteToolBtn.title = 'View note';
+    noteToolBtn.setAttribute('aria-label', 'View note');
+    noteToolBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="9" y1="13" x2="15" y2="13"/></svg>';
+    noteToolBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openRecolorNote().catch((err) => console.warn('[MarkNote] PDF note open failed:', err));
+    });
+
+    const copyToolBtn = document.createElement('button');
+    copyToolBtn.type = 'button';
+    copyToolBtn.className = 'pdf-color-btn pdf-tool-btn';
+    copyToolBtn.setAttribute('data-marknote', 'recolor-btn');
+    copyToolBtn.title = 'Copy highlight text';
+    copyToolBtn.setAttribute('aria-label', 'Copy highlight text');
+    copyToolBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    copyToolBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      copyRecolorText().catch((err) => console.warn('[MarkNote] PDF copy failed:', err));
+    });
+
+    recolorEl.appendChild(noteToolBtn);
+    recolorEl.appendChild(copyToolBtn);
     recolorEl.appendChild(removeBtn);
     document.body.appendChild(recolorEl);
     return recolorEl;
+  }
+
+  // Copy the clicked highlight's saved text (PDF boxes hold no text nodes).
+  async function copyRecolorText() {
+    const annotationId = recolorAnnotationId;
+    hideRecolorPanel();
+    clearSelection();
+    if (!annotationId) {
+      return;
+    }
+    const store = globalThis.MarkNoteStorage;
+    if (!store) {
+      return;
+    }
+    let text = '';
+    try {
+      const found = (await store.getAnnotations()).find((a) => a && a.id === annotationId);
+      text = found && found.selectedText ? String(found.selectedText).replace(/\s+/g, ' ').trim() : '';
+    } catch (err) {
+      return;
+    }
+    if (!text) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      flash('Copy failed.');
+      return;
+    }
+    flash('Copied to clipboard.');
+  }
+
+  // Open the attached note for the clicked highlight, if it has one.
+  async function openRecolorNote() {
+    const annotationId = recolorAnnotationId;
+    hideRecolorPanel();
+    clearSelection();
+    if (!annotationId) {
+      flash('No note on this highlight yet.');
+      return;
+    }
+    if (notes.has(annotationId)) {
+      showNote(annotationId);
+      return;
+    }
+    const store = globalThis.MarkNoteStorage;
+    if (!store) {
+      return;
+    }
+    try {
+      const found = (await store.getAnnotations()).find((a) => a && a.id === annotationId);
+      if (found && found.note) {
+        notes.set(annotationId, {
+          id: found.id,
+          selectedText: String(found.selectedText || '').replace(/\s+/g, ' ').trim().slice(0, 200),
+          noteText: found.note,
+          expiresAt: found.expiresAt,
+        });
+        showNote(annotationId);
+      } else {
+        flash('No note on this highlight yet.');
+      }
+    } catch (err) {
+      // storage read failed — stay quiet, panel already closed.
+    }
   }
 
   // Boxes are pointer-transparent (text stays selectable), so locate the
@@ -807,6 +906,9 @@
       const saved = await persistSelection(range, '', 'highlight', highlightColor);
       const highlights = renderRects(rectsFromRange(range), { annotationId: saved.id, color: highlightColor });
       console.log(`[MarkNote] PDF highlighted ${highlights.length} box(es) on page ${saved.pageNumber}.`);
+      if (highlights.length > 0) {
+        flash('Highlight saved.');
+      }
     } finally {
       hideToolbar();
       lastRange = null;
@@ -834,7 +936,7 @@
     panelMode = 'create';
     panelNoteId = null;
     renderPanel(
-      '📝 New note',
+      'New note',
       pendingPreview,
       '',
       [
@@ -868,13 +970,31 @@
     lastRect = null;
     clearSelection();
     console.log('[MarkNote] PDF note saved.');
+    flash('Note saved.');
   }
 
-  function renderPanel(title, preview, noteText, buttons, editable, rect, expiryText) {
+  function renderPanel(title, preview, noteText, buttons, editable, rect, expiryText, onHeaderClose) {
     panelEl.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'pp-head';
     const t = document.createElement('div');
     t.className = 'pp-title';
     t.textContent = title;
+    head.appendChild(t);
+    if (typeof onHeaderClose === 'function') {
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'pp-close';
+      close.title = 'Close';
+      close.setAttribute('aria-label', 'Close note');
+      close.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      close.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onHeaderClose();
+      });
+      head.appendChild(close);
+    }
+    panelEl.appendChild(head);
     const sel = document.createElement('div');
     sel.className = 'pp-selected';
     sel.textContent = `Selected: “${preview}”`;
@@ -911,6 +1031,9 @@
       if (b.cls) {
         btn.className = b.cls;
       }
+      if (b.cls === 'pp-save') {
+        btn.title = 'Save (Ctrl+Enter)';
+      }
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         b.onClick(ta);
@@ -918,6 +1041,19 @@
       row.appendChild(btn);
     }
     panelEl.appendChild(row);
+
+    if (ta) {
+      ta.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          e.stopPropagation();
+          const saveBtn = row.querySelector('.pp-save');
+          if (saveBtn) {
+            saveBtn.click();
+          }
+        }
+      });
+    }
 
     panelEl.style.display = 'block';
     panelEl.style.visibility = 'hidden';
@@ -952,7 +1088,7 @@
     panelNoteId = noteId;
     const rect = markerRect(noteId) || { left: window.innerWidth / 2, top: 120, bottom: 130, width: 0 };
     renderPanel(
-      '📝 Note',
+      'Note',
       note.selectedText,
       note.noteText,
       [
@@ -960,7 +1096,7 @@
           label: 'Edit', cls: 'pp-save', onClick: () => {
             panelMode = 'edit';
             renderPanel(
-              '📝 Edit note',
+              'Edit note',
               note.selectedText,
               note.noteText,
               [
@@ -992,11 +1128,11 @@
             await deleteNote(noteId);
           },
         },
-        { label: 'Close', cls: '', onClick: () => hidePanel() },
       ],
       false,
       rect,
-      formatExpiry(note.expiresAt)
+      formatExpiry(note.expiresAt),
+      () => hidePanel()
     );
   }
 
@@ -1020,7 +1156,7 @@
     marker.setAttribute('data-marknote', 'note-marker');
     marker.dataset.noteId = noteId;
     marker.dataset.annotationId = noteId;
-    marker.textContent = '📝';
+    marker.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
     marker.title = 'View note';
     marker.setAttribute('aria-label', 'View note');
     marker.addEventListener('mousedown', (e) => e.preventDefault());

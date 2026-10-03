@@ -21,6 +21,28 @@ body {
   color: var(--text);
 }
 
+/* Simple mouse cursor while annotating is on (same affordance as web). */
+body.marknote-pdf-active {
+  cursor: default;
+}
+
+/* Hovering page text shows the line (I-beam) cursor for highlighting. */
+body.marknote-pdf-active .pdf-textlayer span {
+  cursor: text;
+}
+
+#marknote-pdf-recolor-panel,
+#marknote-pdf-toolbar,
+#marknote-pdf-panel,
+#viewerBar {
+  cursor: default;
+}
+
+#marknote-pdf-panel .pp-note,
+#marknote-pdf-panel textarea {
+  cursor: text;
+}
+
 #viewerBar {
   position: sticky;
   top: 0;
@@ -42,14 +64,13 @@ body {
 }
 
 .logo {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: #111827;
-  border: 1px solid #333;
   color: #facc15;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -88,15 +109,15 @@ body {
   gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 3px 9px;
+  border-radius: 6px;
   border: 1px solid #3a3d45;
   color: #b6bac2;
 }
 
 .pill-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #6b7280;
 }
@@ -111,27 +132,29 @@ body {
 }
 
 .btn-small {
-  padding: 7px 12px;
-  border: none;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
   background: var(--accent);
   color: #111827;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
 }
 
 .btn-small:hover {
   background: #fde047;
+  border-color: #fde047;
 }
 
 .viewer-error {
   max-width: 720px;
   margin: 24px auto;
-  padding: 14px 16px;
+  padding: 12px 14px;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 10px;
+  border-radius: 8px;
   color: #b91c1c;
   font-size: 13px;
   line-height: 1.6;
@@ -238,47 +261,78 @@ body {
   justify-content: center;
   font-size: 11px;
   line-height: 1;
-  padding: 1px 3px;
+  padding: 2px;
   background: #ffffff;
   border: 1px solid #facc15;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
 }
 
+.marknote-note-marker svg {
+  width: 12px;
+  height: 12px;
+  display: block;
+  pointer-events: none;
+}
+
 #marknote-pdf-toolbar {
   position: fixed;
   z-index: 400;
   flex-direction: row;
-  gap: 6px;
-  padding: 6px;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   user-select: none;
   -webkit-user-select: none;
 }
 
 #marknote-pdf-toolbar button {
-  border: 1px solid #e5e7eb;
-  border-radius: 7px;
-  background: #f9fafb;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
   color: #111827;
   font-size: 12px;
   font-weight: 600;
-  padding: 6px 10px;
+  font-family: inherit;
+  padding: 4px 8px;
   cursor: pointer;
   white-space: nowrap;
+  line-height: 1.3;
 }
 
-/* ---- Highlight color dots: flat swatches (no emoji) ---- */
+#marknote-pdf-toolbar button:hover {
+  background: #f3f4f6;
+}
+
+#marknote-pdf-toolbar button:active {
+  background: #e5e7eb;
+}
+
+#marknote-pdf-toolbar button svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* ---- Highlight color dots: 20px flat swatches (no emoji) ---- */
 #marknote-pdf-toolbar .pdf-color-btn,
 #marknote-pdf-recolor-panel .pdf-color-btn {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
+  margin: 0 1px;
   padding: 0;
   font-size: 0;
   line-height: 1;
@@ -286,7 +340,7 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 2px solid;
+  border: 1px solid;
   cursor: pointer;
 }
 
@@ -322,7 +376,14 @@ body {
 
 #marknote-pdf-toolbar .pdf-color-btn:hover,
 #marknote-pdf-recolor-panel .pdf-color-btn:hover {
-  transform: scale(1.12);
+  transform: none;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px #9ca3af;
+}
+
+#marknote-pdf-toolbar .pdf-color-btn:active,
+#marknote-pdf-recolor-panel .pdf-color-btn:active {
+  transform: none;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px #6b7280;
 }
 
 /* ---- Recolor picker: small popup on existing-highlight click ---- */
@@ -330,18 +391,19 @@ body {
   position: fixed;
   z-index: 400;
   flex-direction: row;
-  gap: 6px;
-  padding: 6px;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   user-select: none;
   -webkit-user-select: none;
 }
 
 #pdf-highlight-btn {
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #eab308;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px #eab308;
 }
 
 /* ---- Remove button in the highlight options picker ---- */
@@ -350,7 +412,8 @@ body {
   background: #fef2f2;
 }
 
-#marknote-pdf-recolor-panel .pdf-remove-btn svg {
+#marknote-pdf-recolor-panel .pdf-remove-btn svg,
+#marknote-pdf-recolor-panel .pdf-tool-btn svg {
   width: 13px;
   height: 13px;
   display: block;
@@ -365,8 +428,8 @@ body {
   padding: 12px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
   font-size: 13px;
   color: #111827;
   line-height: 1.5;
@@ -377,12 +440,52 @@ body {
   margin-bottom: 6px;
 }
 
+#marknote-pdf-panel .pp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+#marknote-pdf-panel .pp-head .pp-title {
+  margin-bottom: 0;
+}
+
+#marknote-pdf-panel .pp-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7280;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+#marknote-pdf-panel .pp-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+#marknote-pdf-panel .pp-close svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+  pointer-events: none;
+}
+
 #marknote-pdf-panel .pp-selected {
   font-size: 12px;
   color: #4b5563;
   background: #f9fafb;
   border: 1px solid #f0f0f0;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 6px 8px;
   margin-bottom: 8px;
   max-height: 64px;
@@ -392,7 +495,7 @@ body {
 #marknote-pdf-panel .pp-note {
   background: #fffbeb;
   border: 1px solid #fde68a;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 8px;
   margin-bottom: 10px;
   white-space: pre-wrap;
@@ -414,7 +517,7 @@ body {
   min-height: 64px;
   resize: vertical;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 8px;
   font-family: inherit;
   font-size: 13px;
@@ -429,7 +532,8 @@ body {
 
 #marknote-pdf-panel .pp-actions button {
   border: 1px solid #e5e7eb;
-  border-radius: 7px;
+  border-radius: 6px;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   padding: 6px 12px;
@@ -454,6 +558,6 @@ body {
 /* ---- Keyboard accessibility ---- */
 
 :focus-visible {
-  outline: 2px solid #facc15;
+  outline: 2px solid #9ca3af;
   outline-offset: 2px;
 }

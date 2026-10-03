@@ -226,7 +226,7 @@
     const close = document.createElement('button');
     close.id = INDICATOR_CLOSE_ID;
     close.type = 'button';
-    close.textContent = '\u00D7'; // ×
+    close.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     close.title = 'Deactivate MarkNote';
     close.setAttribute('aria-label', 'Deactivate MarkNote');
     close.setAttribute('data-marknote', 'close');
@@ -405,10 +405,100 @@
       e.stopPropagation();
       removeRecolored().catch((err) => console.warn('[MarkNote] Remove failed:', err));
     });
+
+    const noteToolBtn = document.createElement('button');
+    noteToolBtn.type = 'button';
+    noteToolBtn.className = 'marknote-color-btn marknote-tool-btn';
+    noteToolBtn.setAttribute('data-marknote', 'recolor-btn');
+    noteToolBtn.title = 'View note';
+    noteToolBtn.setAttribute('aria-label', 'View note');
+    noteToolBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="9" y1="13" x2="15" y2="13"/></svg>';
+    noteToolBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openRecolorNote().catch((err) => console.warn('[MarkNote] Note open failed:', err));
+    });
+
+    const copyToolBtn = document.createElement('button');
+    copyToolBtn.type = 'button';
+    copyToolBtn.className = 'marknote-color-btn marknote-tool-btn';
+    copyToolBtn.setAttribute('data-marknote', 'recolor-btn');
+    copyToolBtn.title = 'Copy highlight text';
+    copyToolBtn.setAttribute('aria-label', 'Copy highlight text');
+    copyToolBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    copyToolBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      copyRecolorText().catch((err) => console.warn('[MarkNote] Copy failed:', err));
+    });
+
+    recolorEl.appendChild(noteToolBtn);
+    recolorEl.appendChild(copyToolBtn);
     recolorEl.appendChild(removeBtn);
 
     (document.body || document.documentElement).appendChild(recolorEl);
     return recolorEl;
+  }
+
+  // Copy the clicked highlight's text straight from the DOM (works even for
+  // DOM-only highlights that were never persisted).
+  async function copyRecolorText() {
+    const text = recolorMarks
+      .map((m) => (m && m.textContent ? m.textContent : ''))
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim();
+    hideRecolorPanel();
+    if (!text) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+      } catch (e) {
+        ta.remove();
+        showRestoreStatus('Copy failed.');
+        return;
+      }
+      ta.remove();
+    }
+    clearSelection();
+    showRestoreStatus('Copied to clipboard.');
+  }
+
+  // Open the attached note for the clicked highlight, if it has one.
+  async function openRecolorNote() {
+    const annotationId = recolorAnnotationId;
+    hideRecolorPanel();
+    clearSelection();
+    if (!annotationId) {
+      showRestoreStatus('No note on this highlight yet.');
+      return;
+    }
+    if (notes.has(annotationId)) {
+      showViewPanel(annotationId, null);
+      return;
+    }
+    const s = store();
+    if (!s) {
+      return;
+    }
+    try {
+      const found = (await s.getAnnotations(location.href)).find((a) => a && a.id === annotationId);
+      if (found && found.note) {
+        showViewPanel(annotationId, null);
+      } else {
+        showRestoreStatus('No note on this highlight yet.');
+      }
+    } catch (err) {
+      // storage read failed — stay quiet, panel already closed.
+    }
   }
 
   function onHighlightClick(e) {
@@ -593,6 +683,10 @@
     }
     hideToolbar();
     hideRecolorPanel();
+    // Viewing is read-only, so dismissing is safe; create/edit keep drafts.
+    if (panelMode === 'view') {
+      hideNotePanel();
+    }
   }
 
   function onMouseUp(e) {
@@ -781,6 +875,9 @@
       }
 
       console.log(`[MarkNote] Highlighted ${wrapped} text node(s).`);
+      if (wrapped > 0) {
+        showRestoreStatus('Highlight saved.');
+      }
     } catch (err) {
       console.warn('[MarkNote] Highlight failed:', err);
     } finally {
@@ -997,7 +1094,7 @@
 
     const title = document.createElement('div');
     title.className = 'marknote-panel-title';
-    title.textContent = '\uD83D\uDCDD New note';
+    title.textContent = 'New note';
 
     const selected = document.createElement('div');
     selected.className = 'marknote-panel-selected';
@@ -1014,6 +1111,13 @@
     textarea.placeholder = 'Write your note...';
     textarea.rows = 3;
     textarea.setAttribute('aria-label', 'Write your note');
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        saveNoteFromEditor(textarea.value).catch((err) => console.warn('[MarkNote] Note save failed:', err));
+      }
+    });
 
     const actions = document.createElement('div');
     actions.className = 'marknote-panel-actions';
@@ -1022,6 +1126,7 @@
     save.type = 'button';
     save.className = 'marknote-btn-save';
     save.textContent = 'Save';
+    save.title = 'Save (Ctrl+Enter)';
 
     const cancel = document.createElement('button');
     cancel.type = 'button';
@@ -1110,6 +1215,7 @@
     lastRect = null;
     clearSelection();
     console.log('[MarkNote] Note saved.');
+    showRestoreStatus('Note saved.');
   }
 
   function highlightRangeForNote(range, noteId) {
@@ -1135,7 +1241,7 @@
     marker.setAttribute('data-marknote', 'note-marker');
     marker.dataset.noteId = noteId;
     marker.dataset.annotationId = noteId;
-    marker.textContent = '\uD83D\uDCDD'; // 📝
+    marker.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
     marker.title = 'View note';
     marker.setAttribute('aria-label', 'View note');
     marker.addEventListener('mousedown', (e) => e.preventDefault());
@@ -1194,9 +1300,23 @@
     ensureNotePanel();
     panelEl.innerHTML = '';
 
+    const head = document.createElement('div');
+    head.className = 'marknote-panel-head';
     const title = document.createElement('div');
     title.className = 'marknote-panel-title';
-    title.textContent = '\uD83D\uDCDD Note';
+    title.textContent = 'Note';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'marknote-panel-close';
+    close.title = 'Close';
+    close.setAttribute('aria-label', 'Close note');
+    close.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    close.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideNotePanel();
+    });
+    head.appendChild(title);
+    head.appendChild(close);
 
     const selected = document.createElement('div');
     selected.className = 'marknote-panel-selected';
@@ -1229,11 +1349,6 @@
     del.className = 'marknote-btn-delete';
     del.textContent = 'Delete';
 
-    const close = document.createElement('button');
-    close.type = 'button';
-    close.className = 'marknote-btn-cancel';
-    close.textContent = 'Close';
-
     edit.addEventListener('click', (e) => {
       e.stopPropagation();
       showEditPanel(noteId);
@@ -1245,16 +1360,11 @@
       }
       deleteNote(noteId).catch((err) => console.warn('[MarkNote] Note delete failed:', err));
     });
-    close.addEventListener('click', (e) => {
-      e.stopPropagation();
-      hideNotePanel();
-    });
 
     actions.appendChild(edit);
     actions.appendChild(del);
-    actions.appendChild(close);
 
-    panelEl.appendChild(title);
+    panelEl.appendChild(head);
     panelEl.appendChild(selected);
     panelEl.appendChild(body);
     panelEl.appendChild(expiry);
@@ -1284,7 +1394,7 @@
 
     const title = document.createElement('div');
     title.className = 'marknote-panel-title';
-    title.textContent = '\uD83D\uDCDD Edit note';
+    title.textContent = 'Edit note';
 
     const selected = document.createElement('div');
     selected.className = 'marknote-panel-selected';
@@ -1301,6 +1411,13 @@
     textarea.placeholder = 'Write your note...';
     textarea.rows = 3;
     textarea.value = note.noteText;
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        updateNoteText(noteId, textarea.value).catch((err) => console.warn('[MarkNote] Note update failed:', err));
+      }
+    });
 
     const actions = document.createElement('div');
     actions.className = 'marknote-panel-actions';
@@ -1309,6 +1426,7 @@
     save.type = 'button';
     save.className = 'marknote-btn-save';
     save.textContent = 'Save';
+    save.title = 'Save (Ctrl+Enter)';
 
     const cancel = document.createElement('button');
     cancel.type = 'button';

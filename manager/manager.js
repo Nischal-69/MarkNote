@@ -141,6 +141,9 @@
         if (filter === 'web' && !isWeb(a)) {
           return false;
         }
+        if (filter === 'pdf' && !isPdf(a)) {
+          return false;
+        }
         if (filter === 'soon' && remainingMs(a) > SOON_MS) {
           return false;
         }

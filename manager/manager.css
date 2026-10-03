@@ -114,12 +114,13 @@ body {
   gap: 7px;
   padding: 0 10px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 6px;
   background: var(--card);
   color: var(--text-faint);
 }
 
 .search-wrap svg {
+  display: block;
   flex-shrink: 0;
 }
 
@@ -144,7 +145,7 @@ body {
   gap: 4px;
   padding: 2px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 6px;
   background: var(--card);
 }
 
@@ -217,7 +218,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.5px;
   padding: 1px 6px;
-  border-radius: 5px;
+  border-radius: 6px;
   border: 1px solid var(--border);
   color: var(--text-soft);
   background: var(--bg);
@@ -226,7 +227,7 @@ body {
 
 .badge.pdf {
   color: #92600a;
-  border-color: #eab308;
+  border-color: #d4a017;
   background: #fef9c3;
 }
 
@@ -305,7 +306,7 @@ body {
   align-items: center;
   gap: 5px;
   padding: 4px 9px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
   border-radius: 6px;
   background: transparent;
   color: var(--text-soft);
@@ -318,7 +319,6 @@ body {
 .card-actions button:hover {
   background: var(--bg);
   color: var(--text);
-  border-color: var(--border);
 }
 
 .card-actions button:active {
@@ -326,6 +326,7 @@ body {
 }
 
 .card-actions button svg {
+  display: block;
   flex-shrink: 0;
 }
 
@@ -382,6 +383,10 @@ body {
   display: inline-flex;
   margin-bottom: 10px;
   color: var(--text-faint);
+}
+
+.empty-icon svg {
+  display: block;
 }
 
 .empty-title {

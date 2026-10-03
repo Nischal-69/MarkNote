@@ -1,8 +1,56 @@
 /* MarkNote Content Styles — v0.5.0 gated restoration (extends v0.4.0) */
 
-/* Active page state hook. */
+/* Active page state hook: marker cursor while highlighting is on.
+   Scoped to activation so idle pages are completely untouched. */
 .marknote-active {
   /* Intentionally minimal — do not alter page layout or text. */
+}
+
+html.marknote-active body {
+  cursor: default !important;
+}
+
+/* Hovering readable text shows the line (I-beam) cursor for highlighting. */
+html.marknote-active p,
+html.marknote-active span,
+html.marknote-active li,
+html.marknote-active h1,
+html.marknote-active h2,
+html.marknote-active h3,
+html.marknote-active h4,
+html.marknote-active h5,
+html.marknote-active h6,
+html.marknote-active td,
+html.marknote-active th,
+html.marknote-active blockquote,
+html.marknote-active q,
+html.marknote-active pre,
+html.marknote-active code,
+html.marknote-active dt,
+html.marknote-active dd,
+html.marknote-active figcaption {
+  cursor: text !important;
+}
+
+/* Interactive page elements keep their native affordance. */
+html.marknote-active a,
+html.marknote-active button,
+html.marknote-active [role="button"] {
+  cursor: pointer !important;
+}
+
+/* MarkNote's own overlays keep theirs (buttons already use pointer). */
+#marknote-toolbar,
+#marknote-recolor-panel,
+#marknote-note-panel,
+#marknote-indicator {
+  cursor: default !important;
+}
+
+#marknote-note-panel .marknote-panel-note,
+#marknote-note-panel .marknote-panel-selected,
+#marknote-note-panel .marknote-panel-textarea {
+  cursor: text !important;
 }
 
 /* ---- Indicator: now "MarkNote Active ×" with clickable close ---- */
@@ -54,6 +102,13 @@
   background: rgba(255, 255, 255, 0.3) !important;
 }
 
+#marknote-indicator-close svg {
+  width: 12px !important;
+  height: 12px !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
 /* ---- Floating toolbar near selection ---- */
 #marknote-toolbar {
   position: fixed !important;
@@ -80,6 +135,7 @@
   border-radius: 6px !important;
   background: transparent !important;
   color: #111827 !important;
+  font-family: inherit !important;
   font-size: 12px !important;
   font-weight: 600 !important;
   padding: 4px 8px !important;
@@ -147,11 +203,11 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   background-color: #ddd6fe !important;
 }
 
-/* ---- Highlight color dots: flat swatches (no emoji) ---- */
+/* ---- Highlight color dots: flat swatches, 20px circles (no emoji) ---- */
 #marknote-toolbar .marknote-color-btn,
 #marknote-recolor-panel .marknote-color-btn {
-  width: 22px !important;
-  height: 22px !important;
+  width: 20px !important;
+  height: 20px !important;
   padding: 0 !important;
   font-size: 0 !important;
   line-height: 1 !important;
@@ -159,7 +215,7 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   align-items: center !important;
   justify-content: center !important;
   border-radius: 50% !important;
-  border: 2px solid !important;
+  border: 1px solid !important;
   cursor: pointer !important;
 }
 
@@ -195,29 +251,24 @@ mark.marknote-highlight[data-highlight-color="purple"] {
 
 #marknote-toolbar .marknote-color-btn:hover,
 #marknote-recolor-panel .marknote-color-btn:hover {
-  transform: scale(1.12) !important;
-}
-
-/* ---- Toolbar-only color selector: 20px circles, small gaps, subtle rings ----
-   (recolor panel keeps its own size; per-color fills stay shared above) */
-#marknote-toolbar .marknote-color-btn {
-  width: 20px !important;
-  height: 20px !important;
-  margin: 0 1px !important;
-  border-width: 1px !important;
-}
-
-#marknote-toolbar .marknote-color-btn:hover {
   transform: none !important;
   box-shadow: 0 0 0 2px #ffffff !important, 0 0 0 3px #9ca3af !important;
 }
 
-#marknote-toolbar .marknote-color-btn:active {
+#marknote-toolbar .marknote-color-btn:active,
+#marknote-recolor-panel .marknote-color-btn:active {
   transform: none !important;
   box-shadow: 0 0 0 2px #ffffff !important, 0 0 0 3px #6b7280 !important;
 }
 
-#marknote-toolbar .marknote-color-btn:focus-visible {
+/* ---- Toolbar-only color selector: small gaps between dots ----
+   (per-color fills stay shared above) */
+#marknote-toolbar .marknote-color-btn {
+  margin: 0 1px !important;
+}
+
+#marknote-toolbar .marknote-color-btn:focus-visible,
+#marknote-recolor-panel .marknote-color-btn:focus-visible {
   outline: none !important;
   box-shadow: 0 0 0 2px #ffffff !important, 0 0 0 4px #111827 !important;
 }
@@ -228,7 +279,8 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   background: #fef2f2 !important;
 }
 
-#marknote-recolor-panel .marknote-remove-btn svg {
+#marknote-recolor-panel .marknote-remove-btn svg,
+#marknote-recolor-panel .marknote-tool-btn svg {
   width: 13px !important;
   height: 13px !important;
   display: block !important;
@@ -242,12 +294,12 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   display: none; /* toggled to flex via JS */
   flex-direction: row !important;
   align-items: center !important;
-  gap: 6px !important;
-  padding: 6px !important;
+  gap: 4px !important;
+  padding: 4px !important;
   background: #ffffff !important;
   border: 1px solid #e5e7eb !important;
-  border-radius: 10px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
   user-select: none !important;
   -webkit-user-select: none !important;
@@ -273,7 +325,7 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   padding: 1px 3px !important;
   background: #ffffff !important;
   border: 1px solid #facc15 !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
   cursor: pointer !important;
   user-select: none !important;
@@ -282,6 +334,13 @@ mark.marknote-highlight[data-highlight-color="purple"] {
 
 .marknote-note-marker:hover {
   background: #fef9c3 !important;
+}
+
+.marknote-note-marker svg {
+  width: 12px !important;
+  height: 12px !important;
+  display: block !important;
+  pointer-events: none !important;
 }
 
 /* ---- Note panel: floating editor / viewer near selection ---- */
@@ -293,8 +352,8 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   padding: 12px !important;
   background: #ffffff !important;
   border: 1px solid #e5e7eb !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16) !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
   font-size: 13px !important;
   color: #111827 !important;
@@ -309,12 +368,51 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   margin-bottom: 6px !important;
 }
 
+#marknote-note-panel .marknote-panel-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-bottom: 6px !important;
+}
+
+#marknote-note-panel .marknote-panel-head .marknote-panel-title {
+  margin-bottom: 0 !important;
+}
+
+#marknote-note-panel .marknote-panel-close {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: #6b7280 !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+
+#marknote-note-panel .marknote-panel-close:hover {
+  background: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+#marknote-note-panel .marknote-panel-close svg {
+  width: 14px !important;
+  height: 14px !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
 #marknote-note-panel .marknote-panel-selected {
   font-size: 12px !important;
   color: #4b5563 !important;
   background: #f9fafb !important;
   border: 1px solid #f0f0f0 !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   padding: 6px 8px !important;
   margin-bottom: 8px !important;
   max-height: 64px !important;
@@ -330,7 +428,7 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   color: #111827 !important;
   background: #fffbeb !important;
   border: 1px solid #fde68a !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   padding: 8px !important;
   margin-bottom: 10px !important;
   white-space: pre-wrap !important;
@@ -352,7 +450,7 @@ mark.marknote-highlight[data-highlight-color="purple"] {
   min-height: 64px !important;
   resize: vertical !important;
   border: 1px solid #d1d5db !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   padding: 8px !important;
   font-family: inherit !important;
   font-size: 13px !important;
@@ -376,7 +474,8 @@ mark.marknote-highlight[data-highlight-color="purple"] {
 
 #marknote-note-panel .marknote-panel-actions button {
   border: 1px solid #e5e7eb !important;
-  border-radius: 7px !important;
+  border-radius: 6px !important;
+  font-family: inherit !important;
   font-size: 12px !important;
   font-weight: 600 !important;
   padding: 6px 12px !important;
@@ -417,7 +516,7 @@ mark.marknote-highlight[data-highlight-color="purple"] {
 #marknote-indicator-close:focus-visible,
 #marknote-note-panel button:focus-visible,
 .marknote-note-marker:focus-visible {
-  outline: 2px solid #facc15 !important;
+  outline: 2px solid #9ca3af !important;
   outline-offset: 2px !important;
 }
 
