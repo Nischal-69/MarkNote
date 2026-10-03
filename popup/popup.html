@@ -9,10 +9,16 @@
 <body>
   <main class="popup">
     <header class="brand">
-      <div class="logo" aria-hidden="true">M</div>
+      <span class="logo" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <rect width="28" height="28" rx="6" fill="#111827"/>
+          <path d="M8 18.5V10l6 4.5L20 10v8.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="8" y="20.5" width="12" height="2" rx="1" fill="#FACC15"/>
+        </svg>
+      </span>
       <div class="brand-text">
         <h1 class="brand-name">MarkNote</h1>
-        <p class="brand-tag">PDF &amp; Web Highlighter + Notes</p>
+        <p class="brand-tag">PDF &amp; Web Highlighter</p>
       </div>
       <span id="activePill" class="pill is-loading" role="status" aria-live="polite">
         <span class="pill-dot" aria-hidden="true"></span>
@@ -21,19 +27,28 @@
     </header>
 
     <button id="activateBtn" class="btn-primary" type="button">
-      🟡 Activate Highlighter
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+      <span class="btn-label">Activate Highlighter</span>
     </button>
     <button id="viewerBtn" class="btn-primary hidden" type="button">
-      📄 Open in MarkNote
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      <span class="btn-label">Open in MarkNote</span>
     </button>
 
     <p id="statusMsg" class="status" role="status" aria-live="polite"></p>
     <p id="pdfMsg" class="pdf-note hidden" role="status"></p>
 
+    <hr class="divider" />
+
     <section class="stats" aria-label="Annotation statistics">
       <div class="stat">
         <span class="stat-num" id="totalCount">–</span>
-        <span class="stat-label">Saved Annotations</span>
+        <span class="stat-label">Annotations</span>
       </div>
       <div class="stat-sep" aria-hidden="true"></div>
       <div class="stat">
@@ -41,22 +56,42 @@
         <span class="stat-label">On this page</span>
       </div>
     </section>
-    <p class="expiry">
-      <span class="expiry-label">Expiring</span>
-      <span aria-hidden="true">&middot;</span>
-      <span>Within 7 days</span>
-    </p>
+    <p class="expiry">Highlights expire after 7 days</p>
 
-    <button id="viewNotesBtn" class="btn-ghost" type="button" aria-expanded="false" aria-controls="notesList">
-      View Notes
-    </button>
-    <div id="notesList" class="notes" aria-live="polite"></div>
-    <button id="managerBtn" class="btn-ghost btn-manager" type="button">
-      Open Notes Manager
-    </button>
+    <hr class="divider" />
+
+    <nav class="menu" aria-label="Notes actions">
+      <button id="viewNotesBtn" class="btn-menu" type="button" aria-expanded="false" aria-controls="notesList">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="9" y1="13" x2="15" y2="13"/>
+          <line x1="9" y1="17" x2="13" y2="17"/>
+        </svg>
+        <span class="btn-label">View Notes</span>
+        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      <div id="notesList" class="notes" aria-live="polite"></div>
+      <button id="managerBtn" class="btn-menu" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        <span class="btn-label">Open Notes Manager</span>
+      </button>
+    </nav>
 
     <footer class="footer">
-      <button id="settingsBtn" class="link-btn" type="button" aria-expanded="false" aria-controls="settingsPanel">Settings</button>
+      <button id="settingsBtn" class="btn-settings" type="button" aria-expanded="false" aria-controls="settingsPanel">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span class="btn-label">Settings</span>
+      </button>
       <span class="footer-text">v0.12.0</span>
     </footer>
 

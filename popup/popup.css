@@ -1,6 +1,5 @@
-/* MarkNote Popup — v0.7.0 polished redesign.
-   Minimal, modern, compact. CSS variables adapt to the OS light/dark theme
-   (prefers-color-scheme); no theme switch, no external libraries. */
+/* MarkNote Popup — minimal, neutral, compact.
+   System font, subtle borders, 6-8px radius, no gradients or shadows. */
 
 * {
   box-sizing: border-box;
@@ -10,21 +9,19 @@
 
 :root {
   --bg: #ffffff;
-  --bg-soft: #f9fafb;
-  --border: #eceef1;
-  --text: #1a1a1a;
+  --bg-soft: #f8f9fa;
+  --border: #e5e7eb;
+  --text: #111827;
   --text-soft: #4b5563;
   --text-faint: #9ca3af;
   --accent: #111827;
   --accent-hover: #1f2937;
   --accent-text: #ffffff;
-  --highlight: #fef08a;
-  --highlight-border: #facc15;
+  --highlight-border: #d4a017;
   --danger: #b91c1c;
   --ok: #15803d;
-  --ok-dot: #22c55e;
+  --ok-dot: #16a34a;
   --idle-dot: #9ca3af;
-  --radius: 10px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -35,10 +32,9 @@
     --text: #f3f4f6;
     --text-soft: #b6bac2;
     --text-faint: #6b7280;
-    --accent: #facc15;
-    --accent-hover: #fde047;
+    --accent: #f3f4f6;
+    --accent-hover: #ffffff;
     --accent-text: #111827;
-    --highlight: #3a3413;
     --highlight-border: #a3860b;
     --danger: #fca5a5;
     --ok: #86efac;
@@ -49,48 +45,34 @@
 
 body {
   width: 320px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .popup {
-  padding: 18px 16px 12px;
-  animation: rise 0.22s ease-out;
+  padding: 14px 14px 10px;
 }
 
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* ---- Brand ---- */
+/* ---- Header ---- */
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  background: #111827;
-  color: #facc15;
-  font-weight: 700;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-flex;
   flex-shrink: 0;
+}
+
+.logo svg {
+  display: block;
+  border-radius: 6px;
 }
 
 .brand-text {
@@ -99,9 +81,10 @@ body {
 }
 
 .brand-name {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 2.5px;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.1px;
+  line-height: 1.2;
 }
 
 .brand-tag {
@@ -113,7 +96,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* ---- Active status pill ---- */
+/* ---- Status pill ---- */
 
 .pill {
   display: inline-flex;
@@ -121,18 +104,17 @@ body {
   gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 3px 9px;
+  border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--bg-soft);
   color: var(--text-soft);
   flex-shrink: 0;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .pill-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--idle-dot);
   flex-shrink: 0;
@@ -140,116 +122,61 @@ body {
 
 .pill.is-active {
   color: var(--ok);
-  border-color: var(--ok-dot);
 }
 
 .pill.is-active .pill-dot {
   background: var(--ok-dot);
-  animation: pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0);
-  }
-}
-
-.pill.is-pdf {
-  color: var(--text-soft);
-  border-color: var(--highlight-border);
 }
 
 .pill.is-pdf .pill-dot {
   background: var(--highlight-border);
 }
 
-/* ---- PDF context note ---- */
+/* ---- Divider ---- */
 
-.pdf-note {
-  margin-top: 8px;
-  padding: 8px 10px;
-  background: var(--bg-soft);
-  border: 1px dashed var(--highlight-border);
-  border-radius: 8px;
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--text-soft);
-  text-align: center;
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
 }
 
-/* ---- Buttons ---- */
+/* ---- Primary action ---- */
 
 .btn-primary {
   width: 100%;
-  padding: 11px 12px;
-  border: none;
-  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
   background: var(--accent);
   color: var(--accent-text);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.06s ease, opacity 0.15s ease;
 }
 
 .btn-primary:hover {
   background: var(--accent-hover);
-}
-
-.btn-primary:active {
-  transform: scale(0.99);
+  border-color: var(--accent-hover);
 }
 
 .btn-primary:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: default;
 }
 
-.btn-ghost {
-  width: 100%;
-  margin-top: 12px;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+.btn-primary svg {
+  flex-shrink: 0;
 }
 
-.btn-ghost:hover {
-  background: var(--bg-soft);
-  border-color: var(--text-faint);
-}
-
-.btn-manager {
-  margin-top: 8px;
-}
-
-.link-btn {
-  border: none;
-  background: none;
-  padding: 0;
-  color: var(--text-soft);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.link-btn:hover {
-  color: var(--text);
-  text-decoration: underline;
-}
-
-/* ---- Status line ---- */
+/* ---- Status / PDF note ---- */
 
 .status {
-  min-height: 17px;
+  min-height: 16px;
   font-size: 12px;
   color: var(--text-soft);
   margin-top: 8px;
@@ -260,15 +187,26 @@ body {
   color: var(--danger);
 }
 
+.pdf-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-soft);
+  text-align: center;
+}
+
 /* ---- Stats ---- */
 
 .stats {
   display: flex;
   align-items: stretch;
-  margin-top: 12px;
   background: var(--bg-soft);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -277,14 +215,14 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   padding: 10px 6px;
 }
 
 .stat-num {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.1;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }
 
@@ -301,27 +239,70 @@ body {
 }
 
 .expiry {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 8px;
+  margin-top: 7px;
   font-size: 11px;
   color: var(--text-faint);
+  text-align: center;
 }
 
-.expiry-label {
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
+/* ---- Menu buttons ---- */
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-/* ---- Notes list (read-only, this page) ---- */
+.btn-menu,
+.btn-settings {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.btn-menu:hover,
+.btn-settings:hover {
+  background: var(--bg-soft);
+}
+
+.btn-menu .btn-label,
+.btn-settings .btn-label {
+  flex: 1;
+}
+
+.btn-menu svg,
+.btn-settings svg {
+  flex-shrink: 0;
+  color: var(--text-soft);
+}
+
+.btn-menu .chevron {
+  color: var(--text-faint);
+  margin-left: auto;
+  transition: transform 0.15s ease;
+}
+
+.btn-menu[aria-expanded="true"] .chevron {
+  transform: rotate(180deg);
+}
+
+/* ---- Notes list ---- */
 
 .notes {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.22s ease-out;
+  transition: grid-template-rows 0.18s ease-out;
 }
 
 .notes.open {
@@ -336,50 +317,40 @@ body {
 .notes-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 10px;
-  max-height: 220px;
+  gap: 6px;
+  padding: 2px 0;
+  max-height: 200px;
   overflow-y: auto;
 }
 
 .note-card {
   border: 1px solid var(--border);
-  border-left: 3px solid var(--highlight-border);
-  border-radius: 8px;
+  border-left: 2px solid var(--highlight-border);
+  border-radius: 6px;
   padding: 8px 10px;
   background: var(--bg);
-  animation: rise 0.18s ease-out;
-}
-
-.note-quote {
-  font-size: 12px;
-  color: var(--text-soft);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .note-head {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .note-kind {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-soft);
 }
 
 .badge {
   display: inline-block;
   font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  padding: 1px 7px;
-  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 6px;
   border: 1px solid var(--border);
   color: var(--text-soft);
   background: var(--bg-soft);
@@ -398,6 +369,15 @@ body {
   }
 }
 
+.note-quote {
+  font-size: 12px;
+  color: var(--text-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .note-text {
   font-size: 12px;
   margin-top: 4px;
@@ -406,13 +386,13 @@ body {
 }
 
 .note-meta {
-  margin-top: 4px;
+  margin-top: 3px;
   font-size: 10px;
   color: var(--text-faint);
 }
 
 .notes-empty {
-  padding-top: 10px;
+  padding: 8px 0;
   font-size: 12px;
   color: var(--text-faint);
   text-align: center;
@@ -424,9 +404,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--border);
+}
+
+.footer .btn-settings {
+  width: auto;
+  border-color: transparent;
+  padding: 6px 8px;
+  margin-left: -8px;
+}
+
+.footer .btn-settings:hover {
+  border-color: var(--border);
 }
 
 .footer-text {
@@ -435,11 +427,11 @@ body {
 }
 
 .settings {
-  margin-top: 10px;
-  padding: 10px 12px;
+  margin-top: 8px;
+  padding: 9px 10px;
   background: var(--bg-soft);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
   font-size: 12px;
   color: var(--text-soft);
   line-height: 1.5;
@@ -452,6 +444,6 @@ body {
 /* ---- Keyboard accessibility ---- */
 
 :focus-visible {
-  outline: 2px solid var(--highlight-border);
+  outline: 2px solid var(--text-soft);
   outline-offset: 2px;
 }

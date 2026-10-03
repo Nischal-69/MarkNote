@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
   viewNotesBtn.addEventListener('click', async () => {
     const open = notesList.classList.toggle('open');
     viewNotesBtn.setAttribute('aria-expanded', String(open));
-    viewNotesBtn.textContent = open ? 'Hide Notes' : 'View Notes';
+    setBtnLabel(viewNotesBtn, open ? 'Hide Notes' : 'View Notes');
     if (open) {
       await renderNotesList().catch((err) => {
         console.warn('[MarkNote] Notes list failed:', err);
@@ -192,9 +192,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderActivateBtn() {
-    activateBtn.textContent = stateKnown && isActive
-      ? 'Deactivate Highlighter'
-      : '🟡 Activate Highlighter';
+    setBtnLabel(
+      activateBtn,
+      stateKnown && isActive ? 'Deactivate Highlighter' : 'Activate Highlighter'
+    );
+  }
+
+  // Update only the text label so the inline SVG icon is preserved.
+  function setBtnLabel(btn, text) {
+    const label = btn.querySelector('.btn-label');
+    if (label) {
+      label.textContent = text;
+    } else {
+      btn.textContent = text;
+    }
   }
 
   // Identify PDF contexts. Viewer-owned pages can never accept web
