@@ -3,31 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notes Manager — MarkNote</title>
+  <title>Notes — MarkNote</title>
   <link rel="stylesheet" href="manager.css" />
 </head>
 <body>
   <div class="page">
     <header class="topbar">
       <div class="brand">
-        <div class="logo" aria-hidden="true">M</div>
-        <div>
-          <h1>Notes Manager</h1>
-          <p>MarkNote &middot; PDF &amp; Web Highlighter + Notes</p>
-        </div>
+        <span class="back" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+        </span>
+        <span class="wordmark">MarkNote</span>
       </div>
       <p id="countLine" class="count" aria-live="polite">…</p>
     </header>
 
+    <h1 class="page-title">Notes</h1>
+
     <div class="toolbar">
-      <input
-        id="searchInput"
-        class="search"
-        type="search"
-        placeholder="Search title, domain, text, note…"
-        aria-label="Search annotations"
-        autocomplete="off"
-      />
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/>
+          <line x1="21" y1="21" x2="16.5" y2="16.5"/>
+        </svg>
+        <input
+          id="searchInput"
+          class="search"
+          type="search"
+          placeholder="Search notes…"
+          aria-label="Search annotations"
+          autocomplete="off"
+        />
+      </div>
       <div class="filters" role="tablist" aria-label="Filters">
         <button class="filter is-on" type="button" data-filter="all" role="tab" aria-selected="true">All</button>
         <button class="filter" type="button" data-filter="web" role="tab" aria-selected="false">Web</button>
@@ -37,7 +47,9 @@
 
     <p id="statusMsg" class="status" role="status" aria-live="polite"></p>
 
-    <main id="list" class="list" aria-live="polite"><p class="empty">Loading annotations…</p></main>
+    <main id="list" class="list" aria-live="polite">
+      <div class="empty"><p class="empty-title">Loading annotations…</p></div>
+    </main>
   </div>
 
   <script src="../storage/storage.js"></script>

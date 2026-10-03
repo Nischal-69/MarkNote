@@ -19,6 +19,68 @@
   let filter = 'all';
   let statusTimer = null;
 
+  // Inline SVG icons (presentation only — no logic depends on button content).
+  const SVG_OPEN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+  const SVG_EDIT = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>';
+  const SVG_COPY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const SVG_DELETE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+  const SVG_SAVE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+  const SVG_CANCEL = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  const SVG_EMPTY = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>';
+
+  // Build an icon + text action button. Label changes go through the
+  // inner span so the SVG is never disturbed.
+  function actionBtn(icon, label, className) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    if (className) {
+      btn.className = className;
+    }
+    btn.innerHTML = `${icon}<span class="btn-label"></span>`;
+    btn.querySelector('.btn-label').textContent = label;
+    btn.setAttribute('aria-label', label);
+    return btn;
+  }
+
+  function setBtnLabel(btn, text) {
+    const label = btn.querySelector('.btn-label');
+    if (label) {
+      label.textContent = text;
+    } else {
+      btn.textContent = text;
+    }
+    btn.setAttribute('aria-label', text);
+  }
+
+  // Structured empty state. Same branches/conditions as before, only markup.
+  function showEmpty(kind) {
+    list.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'empty';
+    const icon = document.createElement('span');
+    icon.className = 'empty-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = SVG_EMPTY;
+    const title = document.createElement('p');
+    title.className = 'empty-title';
+    const sub = document.createElement('p');
+    sub.className = 'empty-sub';
+    if (kind === 'error') {
+      title.textContent = 'Could not load annotations';
+      sub.textContent = 'Check storage access and try again.';
+    } else if (kind === 'nomatch') {
+      title.textContent = 'No matching annotations';
+      sub.textContent = 'Try a different search or filter.';
+    } else {
+      title.textContent = 'No saved annotations';
+      sub.textContent = 'Your highlights and notes will appear here.';
+    }
+    wrap.appendChild(icon);
+    wrap.appendChild(title);
+    wrap.appendChild(sub);
+    list.appendChild(wrap);
+  }
+
   init().catch((err) => {
     console.warn('[MarkNote] Manager init failed:', err);
     setStatus('Could not load annotations.');
@@ -65,11 +127,7 @@
       all = await storage.getAnnotations();
     } catch (err) {
       console.warn('[MarkNote] Load failed:', err);
-      list.innerHTML = '';
-      const empty = document.createElement('p');
-      empty.className = 'empty';
-      empty.textContent = 'Could not load annotations. Check storage access and try again.';
-      list.appendChild(empty);
+      showEmpty('error');
       setStatus('Could not load annotations.');
       return;
     }
@@ -108,12 +166,7 @@
       : `${all.length} annotation${all.length === 1 ? '' : 's'}`;
 
     if (items.length === 0) {
-      const empty = document.createElement('p');
-      empty.className = 'empty';
-      empty.textContent = all.length === 0
-        ? 'No saved annotations yet. Highlight text on any page to start.'
-        : 'No annotations match your search.';
-      list.appendChild(empty);
+      showEmpty(all.length === 0 ? 'empty' : 'nomatch');
       return;
     }
 
@@ -157,7 +210,7 @@
     if (a.note) {
       const label = document.createElement('p');
       label.className = 'card-note-label';
-      label.textContent = 'My note';
+      label.textContent = 'Note';
       const note = document.createElement('p');
       note.className = 'card-note';
       note.textContent = a.note;
@@ -182,9 +235,8 @@
     const actions = document.createElement('div');
     actions.className = 'card-actions';
 
-    const openBtn = document.createElement('button');
-    openBtn.type = 'button';
-    openBtn.textContent = 'Open page';
+    const openBtn = actionBtn(SVG_OPEN, 'Open');
+    openBtn.title = 'Open page';
     openBtn.addEventListener('click', () => {
       // PDF annotations reopen inside MarkNote's own viewer (restorable);
       // web annotations open the original page.
@@ -197,20 +249,14 @@
       }
     });
 
-    const editBtn = document.createElement('button');
-    editBtn.type = 'button';
-    editBtn.textContent = a.note ? 'Edit note' : 'Add note';
+    const editBtn = actionBtn(SVG_EDIT, a.note ? 'Edit note' : 'Add note');
     editBtn.addEventListener('click', () => startEdit(el, a));
 
-    const copyBtn = document.createElement('button');
-    copyBtn.type = 'button';
-    copyBtn.textContent = 'Copy text';
+    const copyBtn = actionBtn(SVG_COPY, 'Copy');
+    copyBtn.title = 'Copy text';
     copyBtn.addEventListener('click', () => copyText(a.selectedText, copyBtn));
 
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'danger';
-    delBtn.textContent = 'Delete';
+    const delBtn = actionBtn(SVG_DELETE, 'Delete', 'danger');
     delBtn.addEventListener('click', () => removeItem(el, a));
 
     actions.appendChild(openBtn);
@@ -234,12 +280,8 @@
 
     const row = document.createElement('div');
     row.className = 'card-actions';
-    const save = document.createElement('button');
-    save.type = 'button';
-    save.textContent = 'Save';
-    const cancel = document.createElement('button');
-    cancel.type = 'button';
-    cancel.textContent = 'Cancel';
+    const save = actionBtn(SVG_SAVE, 'Save');
+    const cancel = actionBtn(SVG_CANCEL, 'Cancel');
     row.appendChild(save);
     row.appendChild(cancel);
 
@@ -314,9 +356,10 @@
       }
       ta.remove();
     }
-    const label = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = label; }, 1200);
+    const label = btn.querySelector('.btn-label');
+    const original = label ? label.textContent : btn.textContent;
+    setBtnLabel(btn, 'Copied!');
+    setTimeout(() => { setBtnLabel(btn, original); }, 1200);
   }
 
   // ---------- Helpers ----------
