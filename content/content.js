@@ -254,7 +254,21 @@
     toolbarEl = document.createElement('div');
     toolbarEl.id = TOOLBAR_ID;
     toolbarEl.setAttribute('data-marknote', 'toolbar');
+    toolbarEl.setAttribute('role', 'toolbar');
+    toolbarEl.setAttribute('aria-label', 'MarkNote selection tools');
     toolbarEl.style.display = 'none';
+
+    const highlightActionBtn = document.createElement('button');
+    highlightActionBtn.type = 'button';
+    highlightActionBtn.className = 'marknote-action-btn';
+    highlightActionBtn.setAttribute('data-marknote', 'highlight-btn');
+    highlightActionBtn.title = 'Highlight';
+    highlightActionBtn.setAttribute('aria-label', 'Highlight selection');
+    highlightActionBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20l1.5-4.5L16 5a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20z"/><path d="M14.5 6.5l3 3"/></svg><span>Highlight</span>';
+    highlightActionBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      applyHighlightFromStoredRange(HIGHLIGHT_COLOR).catch((err) => console.warn('[MarkNote] Highlight failed:', err));
+    });
 
     highlightBtn = null;
     colorBtns = [];
@@ -281,9 +295,11 @@
     noteBtn = document.createElement('button');
     noteBtn.id = NOTE_BTN_ID;
     noteBtn.type = 'button';
+    noteBtn.className = 'marknote-action-btn';
     noteBtn.setAttribute('data-marknote', 'note-btn');
     noteBtn.title = 'Add note';
-    noteBtn.textContent = '📝 Note'; // 📝 Note
+    noteBtn.setAttribute('aria-label', 'Add note');
+    noteBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg><span>Note</span>';
 
     toolbarEl.addEventListener('mousedown', (e) => e.preventDefault());
     toolbarEl.addEventListener('mouseup', (e) => e.stopPropagation());
@@ -293,12 +309,22 @@
       openNoteEditor();
     });
 
+    toolbarEl.appendChild(highlightActionBtn);
+    toolbarEl.appendChild(makeToolbarSeparator());
     for (const btn of colorBtns) {
       toolbarEl.appendChild(btn);
     }
+    toolbarEl.appendChild(makeToolbarSeparator());
     toolbarEl.appendChild(noteBtn);
 
     (document.body || document.documentElement).appendChild(toolbarEl);
+  }
+
+  function makeToolbarSeparator() {
+    const sep = document.createElement('span');
+    sep.className = 'marknote-toolbar-sep';
+    sep.setAttribute('aria-hidden', 'true');
+    return sep;
   }
 
   function hideToolbar() {
